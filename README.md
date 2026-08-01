@@ -1,5 +1,7 @@
 # PhotographySite
 
+[![CI](https://github.com/bWheeler1977/photography-website/actions/workflows/ci.yml/badge.svg)](https://github.com/bWheeler1977/photography-website/actions/workflows/ci.yml)
+
 A photography portfolio and print shop built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, and **Motion**.
 
 ## Getting started
@@ -79,6 +81,15 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 3. Implement `createCheckoutSession` in `src/lib/shop/checkout.ts`
 4. Wire the shop UI to `POST /api/checkout`
+
+## Deployment and CI
+
+| Service | Role |
+|---------|------|
+| **Vercel** | Automatic production and preview deploys on every push/PR |
+| **GitHub Actions** | Runs lint and build checks on push to `main` and on pull requests |
+
+Vercel builds and hosts the site. GitHub Actions verifies every change passes `npm run lint` and `npm run build` before you merge.
 
 ## Scripts
 

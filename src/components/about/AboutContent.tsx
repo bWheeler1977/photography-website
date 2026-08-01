@@ -23,7 +23,7 @@ export function AboutContent() {
         transition={{ duration: 0.6, delay: 0.15 }}
       >
         <p>
-          PhotographySite is a portfolio and print shop built with Next.js,
+          BrianWheelerPhotography is a portfolio and print shop built with Next.js,
           TypeScript, Tailwind CSS, and Motion. It is structured so you can
           connect your Instagram feed and sell fine art prints when you are
           ready.

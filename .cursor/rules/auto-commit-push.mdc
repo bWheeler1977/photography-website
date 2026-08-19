@@ -1,0 +1,40 @@
+---
+description: Auto-commit and push changes to GitHub after each task in this repo
+alwaysApply: true
+---
+
+# Auto-commit and push
+
+This is Brian's personal repo. **Do not ask before committing.** After completing any code or config changes, commit and push immediately.
+
+## Workflow (every task with file changes)
+
+1. Run `git status` and `git diff` to review what changed.
+2. Stage relevant files only — never commit secrets (`.env.local`, credentials, keys).
+3. Write a concise commit message (1–2 sentences, focus on why).
+4. Commit, then `git push` to `origin` on the current branch.
+5. Confirm with `git status` that the branch is up to date with remote.
+
+## Git safety (still required)
+
+- Never update git config, force-push, or skip hooks unless Brian explicitly asks.
+- Never commit `.env.local` or files containing secrets.
+- Do not create empty commits.
+- If commit fails due to a hook, fix the issue and create a new commit (do not amend unless allowed by hook rules).
+
+## Commit messages
+
+Follow existing style: short imperative summary, optional body for multi-part changes.
+
+Examples:
+- `Wire hero copy to Sanity site settings`
+- `Fix gallery image sizing on mobile`
+
+## When to skip
+
+- Question-only or review-only tasks with no file edits.
+- Brian explicitly says not to commit yet.
+
+## On push failure
+
+Report the error, fix auth/conflicts if possible, and retry. Do not leave completed work uncommitted.

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "PhotographySite",
-    template: "%s | PhotographySite",
+    default: "Brian Wheeler Photography",
+    template: "%s | Brian Wheeler Photography",
   },
   description: "Fine art photography portfolio and print shop.",
 };

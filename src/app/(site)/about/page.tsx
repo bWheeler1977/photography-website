@@ -4,7 +4,7 @@ import { getAboutPage } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Learn about the photographer behind PhotographySite.",
+  description: "Learn about the photographer behind Brian Wheeler Photography.",
 };
 
 export default async function AboutPage() {

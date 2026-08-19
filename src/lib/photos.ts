@@ -23,7 +23,7 @@ const PLACEHOLDER_PHOTOS: Photo[] = [
     title: "Urban Reflection",
     alt: "City street reflected in rain puddles at night",
     src: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&q=80",
-    category: "street",
+    category: "city",
     featured: true,
   },
   {
@@ -46,7 +46,7 @@ const PLACEHOLDER_PHOTOS: Photo[] = [
     title: "Neon Crosswalk",
     alt: "Pedestrians crossing a neon-lit intersection",
     src: "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=1200&q=80",
-    category: "street",
+    category: "city",
   },
   {
     id: "6",

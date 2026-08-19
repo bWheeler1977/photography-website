@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   description: "Browse the full photography collection.",
 };
 
-export default function GalleryPage() {
-  const photos = getAllPhotos();
+export default async function GalleryPage() {
+  const photos = await getAllPhotos();
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">
@@ -19,7 +19,7 @@ export default function GalleryPage() {
         </h1>
         <p className="mt-4 text-lg text-muted">
           A curated collection of landscape, portrait, and street photography.
-          Instagram integration will replace placeholder content later.
+          Manage photos in Sanity Studio at <code className="text-foreground">/studio</code>.
         </p>
       </header>
       <GalleryGrid photos={photos} />

@@ -24,24 +24,22 @@ Open [http://localhost:3000](http://localhost:3000).
 | TypeScript | Type safety |
 | Tailwind CSS v4 | Styling |
 | Motion | Animations (`motion/react`) |
+| Sanity | Headless CMS + embedded Studio at `/studio` |
 
 ## Project structure
 
 ```
-src/
-├── app/                    # App Router pages & API routes
-│   ├── api/
-│   │   ├── instagram/      # Instagram feed endpoint (stub)
-│   │   └── checkout/       # Stripe checkout endpoint (stub)
-│   ├── gallery/
-│   ├── shop/
-│   └── about/
-├── components/             # UI components (Motion in client components)
-├── lib/
-│   ├── instagram/          # Instagram Graph API client
-│   ├── shop/               # Checkout helpers
-│   └── photos.ts           # Placeholder photo data
-└── types/                  # Shared TypeScript types
+PhotographySite/
+├── sanity.config.ts        # Sanity Studio config
+├── sanity.cli.ts           # Sanity CLI config
+├── src/
+│   ├── app/
+│   │   ├── (site)/         # Public site pages
+│   │   ├── studio/         # Embedded Sanity Studio at /studio
+│   │   └── api/
+│   ├── sanity/             # Schemas, client, queries
+│   ├── components/
+│   └── lib/
 ```
 
 ## Pages
@@ -50,6 +48,30 @@ src/
 - **/gallery** — Full portfolio grid
 - **/shop** — Print products (checkout coming soon)
 - **/about** — Bio and roadmap
+- **/studio** — Sanity Studio (content management)
+
+## Sanity CMS
+
+1. Create a project at [sanity.io/manage](https://www.sanity.io/manage)
+2. Copy `.env.example` to `.env.local` and set:
+
+```env
+NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id
+NEXT_PUBLIC_SANITY_DATASET=production
+```
+
+3. Add the same env vars in **Vercel** project settings
+4. Run `npm run dev` and open [http://localhost:3000/studio](http://localhost:3000/studio)
+5. In Studio, create **Site Settings**, **About Page**, **Photos**, and **Print Products**
+
+The site falls back to placeholder content until Sanity is configured and populated.
+
+### CORS for production Studio
+
+In [sanity.io/manage](https://www.sanity.io/manage) → your project → **API** → **CORS origins**, add:
+
+- `http://localhost:3000`
+- Your Vercel production URL (e.g. `https://your-site.vercel.app`)
 
 ## Future integrations
 
@@ -66,7 +88,7 @@ INSTAGRAM_USER_ID=your_user_id
 ```
 
 5. Hit `GET /api/instagram` to verify the connection
-6. Swap placeholder photos in `src/lib/photos.ts` with data from `src/lib/instagram/client.ts`
+6. Optionally sync Instagram media into Sanity photo documents
 
 ### E-commerce (Stripe)
 
@@ -103,5 +125,5 @@ npm run lint     # Run ESLint
 ## Notes
 
 - Motion components use `"use client"` and live in leaf components to keep pages as Server Components where possible.
-- Placeholder images come from Unsplash. Replace with your own assets or Instagram media.
-- Print products are derived from featured photos until a real product catalog is added.
+- Placeholder images are used until Sanity photos are published.
+- Print products come from Sanity, with placeholder fallbacks until content exists.

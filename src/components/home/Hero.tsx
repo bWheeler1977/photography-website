@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
+import type { SiteSettings } from "@/types";
 
-export function Hero() {
+type HeroProps = {
+  settings: SiteSettings;
+};
+
+export function Hero({ settings }: HeroProps) {
   return (
     <section className="relative overflow-hidden">
       <div className="mx-auto flex max-w-7xl flex-col items-start px-6 py-24 md:py-32">
@@ -13,7 +18,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          Fine Art Photography
+          {settings.heroEyebrow}
         </motion.p>
 
         <motion.h1
@@ -22,7 +27,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
         >
-          Capturing light, mood, and the spaces in between.
+          {settings.heroHeadline}
         </motion.h1>
 
         <motion.p
@@ -31,8 +36,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          A portfolio built with Next.js and Motion. Instagram feeds and print
-          sales are ready to plug in when you are.
+          {settings.heroDescription}
         </motion.p>
 
         <motion.div

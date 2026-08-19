@@ -39,3 +39,17 @@ export type CartItem = {
   sizeId: string;
   quantity: number;
 };
+
+export type AboutPageContent = {
+  title: string;
+  paragraphs: string[];
+  roadmapTitle: string;
+  roadmapItems: string[];
+};
+
+export type SiteSettings = {
+  heroEyebrow: string;
+  heroHeadline: string;
+  heroDescription: string;
+  instagramUrl: string;
+};

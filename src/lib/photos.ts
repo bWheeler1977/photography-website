@@ -1,3 +1,12 @@
+import { getSanityClient } from "@/sanity/client";
+import { isSanityConfigured } from "@/sanity/env";
+import { urlFor } from "@/sanity/image";
+import {
+  allPhotosQuery,
+  featuredPhotosQuery,
+  photoByIdQuery,
+  type SanityPhotoDocument,
+} from "@/sanity/queries";
 import type { Photo } from "@/types";
 
 const PLACEHOLDER_PHOTOS: Photo[] = [
@@ -48,14 +57,73 @@ const PLACEHOLDER_PHOTOS: Photo[] = [
   },
 ];
 
-export function getAllPhotos(): Photo[] {
-  return PLACEHOLDER_PHOTOS;
+function mapPhoto(doc: SanityPhotoDocument): Photo {
+  return {
+    id: doc._id,
+    title: doc.title,
+    alt: doc.alt,
+    src: urlFor(doc.image).width(1200).quality(85).url(),
+    category: doc.category,
+    featured: doc.featured,
+    instagramId: doc.instagramId,
+  };
 }
 
-export function getFeaturedPhotos(): Photo[] {
-  return PLACEHOLDER_PHOTOS.filter((photo) => photo.featured);
+export async function getAllPhotos(): Promise<Photo[]> {
+  if (!isSanityConfigured) {
+    return PLACEHOLDER_PHOTOS;
+  }
+
+  try {
+    const photos = await getSanityClient().fetch<SanityPhotoDocument[]>(
+      allPhotosQuery,
+    );
+
+    if (!photos.length) {
+      return PLACEHOLDER_PHOTOS;
+    }
+
+    return photos.map(mapPhoto);
+  } catch {
+    return PLACEHOLDER_PHOTOS;
+  }
 }
 
-export function getPhotoById(id: string): Photo | undefined {
-  return PLACEHOLDER_PHOTOS.find((photo) => photo.id === id);
+export async function getFeaturedPhotos(): Promise<Photo[]> {
+  if (!isSanityConfigured) {
+    return PLACEHOLDER_PHOTOS.filter((photo) => photo.featured);
+  }
+
+  try {
+    const photos = await getSanityClient().fetch<SanityPhotoDocument[]>(
+      featuredPhotosQuery,
+    );
+
+    if (!photos.length) {
+      return PLACEHOLDER_PHOTOS.filter((photo) => photo.featured);
+    }
+
+    return photos.map(mapPhoto);
+  } catch {
+    return PLACEHOLDER_PHOTOS.filter((photo) => photo.featured);
+  }
+}
+
+export async function getPhotoById(id: string): Promise<Photo | undefined> {
+  if (!isSanityConfigured) {
+    return PLACEHOLDER_PHOTOS.find((photo) => photo.id === id);
+  }
+
+  try {
+    const photo = await getSanityClient().fetch<SanityPhotoDocument | null>(
+      photoByIdQuery,
+      {
+        id,
+      },
+    );
+
+    return photo ? mapPhoto(photo) : undefined;
+  } catch {
+    return PLACEHOLDER_PHOTOS.find((photo) => photo.id === id);
+  }
 }

@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   description: "Purchase fine art photography prints.",
 };
 
-export default function ShopPage() {
-  const products = getPrintProducts();
+export default async function ShopPage() {
+  const products = await getPrintProducts();
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">
@@ -18,8 +18,8 @@ export default function ShopPage() {
           Fine Art Prints
         </h1>
         <p className="mt-4 text-lg text-muted">
-          Museum-quality prints on archival paper. Checkout and payment will be
-          wired up with Stripe in a future update.
+          Museum-quality prints on archival paper. Manage products in Sanity
+          Studio; Stripe checkout will be wired up next.
         </p>
       </header>
       <ShopGrid products={products} />

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    const products = getPrintProducts();
+    const products = await getPrintProducts();
     buildLineItems(body.items, products);
     const session = await createCheckoutSession(body.items);
 

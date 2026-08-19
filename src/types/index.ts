@@ -3,6 +3,7 @@ export type Photo = {
   title: string;
   alt: string;
   src: string;
+  fullSrc: string;
   category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature";
   featured?: boolean;
   instagramId?: string;

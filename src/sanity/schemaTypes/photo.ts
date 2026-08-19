@@ -51,6 +51,12 @@ export const photo = defineType({
       validation: (rule) => rule.required().error("Category is required"),
     }),
     defineField({
+      name: "featured",
+      title: "Featured on homepage",
+      type: "boolean",
+      initialValue: false,
+    }),
+    defineField({
       name: "instagramId",
       title: "Instagram post ID",
       type: "string",

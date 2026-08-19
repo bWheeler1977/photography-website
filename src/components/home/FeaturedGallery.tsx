@@ -13,19 +13,9 @@ type FeaturedGalleryProps = {
 
 export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const selectedPhoto =
-    selectedIndex !== null ? photos[selectedIndex] ?? null : null;
 
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
-  const showPrevious = () =>
-    setSelectedIndex((current) =>
-      current === null ? null : (current - 1 + photos.length) % photos.length,
-    );
-  const showNext = () =>
-    setSelectedIndex((current) =>
-      current === null ? null : (current + 1) % photos.length,
-    );
 
   return (
     <section className="border-t border-border/60 bg-surface/40 py-20">
@@ -83,10 +73,9 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
       </div>
 
       <PhotoLightbox
-        photo={selectedPhoto}
+        photos={photos}
+        index={selectedIndex}
         onClose={closePhoto}
-        onPrevious={photos.length > 1 ? showPrevious : undefined}
-        onNext={photos.length > 1 ? showNext : undefined}
       />
     </section>
   );

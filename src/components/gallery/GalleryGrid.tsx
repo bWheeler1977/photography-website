@@ -12,19 +12,9 @@ type GalleryGridProps = {
 
 export function GalleryGrid({ photos }: GalleryGridProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const selectedPhoto =
-    selectedIndex !== null ? photos[selectedIndex] ?? null : null;
 
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
-  const showPrevious = () =>
-    setSelectedIndex((current) =>
-      current === null ? null : (current - 1 + photos.length) % photos.length,
-    );
-  const showNext = () =>
-    setSelectedIndex((current) =>
-      current === null ? null : (current + 1) % photos.length,
-    );
 
   return (
     <>
@@ -65,10 +55,9 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
       </div>
 
       <PhotoLightbox
-        photo={selectedPhoto}
+        photos={photos}
+        index={selectedIndex}
         onClose={closePhoto}
-        onPrevious={photos.length > 1 ? showPrevious : undefined}
-        onNext={photos.length > 1 ? showNext : undefined}
       />
     </>
   );

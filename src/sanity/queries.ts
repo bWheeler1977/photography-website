@@ -76,7 +76,7 @@ export type SanityPhotoDocument = {
   title: string;
   alt: string;
   image: SanityImageSource;
-  category: "landscape" | "portrait" | "street";
+  category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature";
   featured?: boolean;
   instagramId?: string;
 };

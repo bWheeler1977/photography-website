@@ -18,7 +18,7 @@ export default async function GalleryPage() {
           Gallery
         </h1>
         <p className="mt-4 text-lg text-muted">
-          A curated collection of landscape, portrait, and street photography.
+          A curated collection of landscape, birds, wildlife, city, portrait, and nature photography.
           Manage photos in Sanity Studio at <code className="text-foreground">/studio</code>.
         </p>
       </header>

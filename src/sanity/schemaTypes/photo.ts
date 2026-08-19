@@ -40,18 +40,15 @@ export const photo = defineType({
       options: {
         list: [
           { title: "Landscape", value: "landscape" },
+          { title: "Birds", value: "birds" },
+          { title: "Wildlife", value: "wildlife" },
+          { title: "City", value: "city" },
           { title: "Portrait", value: "portrait" },
-          { title: "Street", value: "street" },
+          { title: "Nature", value: "nature" },
         ],
         layout: "radio",
       },
-      validation: (rule) => rule.required(),
-    }),
-    defineField({
-      name: "featured",
-      title: "Featured on homepage",
-      type: "boolean",
-      initialValue: false,
+      validation: (rule) => rule.required().error("Category is required"),
     }),
     defineField({
       name: "instagramId",

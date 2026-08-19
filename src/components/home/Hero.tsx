@@ -60,10 +60,9 @@ export function Hero({ settings }: HeroProps) {
         </motion.div>
       </div>
 
-      <motion.div
-        className="pointer-events-none absolute -right-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-zinc-800/30 blur-3xl"
-        animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      <div
+        aria-hidden="true"
+        className="hero-glow pointer-events-none absolute -right-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-zinc-800/30 blur-3xl"
       />
     </section>
   );

@@ -1,4 +1,4 @@
-import { getSanityClient } from "@/sanity/client";
+import { fetchSanity } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import {
   aboutPageQuery,
@@ -55,7 +55,7 @@ export async function getAboutPage(): Promise<AboutPageContent> {
   }
 
   try {
-    const content = await getSanityClient().fetch<SanityAboutPageDocument | null>(
+    const content = await fetchSanity<SanityAboutPageDocument | null>(
       aboutPageQuery,
     );
 
@@ -75,7 +75,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   }
 
   try {
-    const content = await getSanityClient().fetch<SanitySiteSettingsDocument | null>(
+    const content = await fetchSanity<SanitySiteSettingsDocument | null>(
       siteSettingsQuery,
     );
 

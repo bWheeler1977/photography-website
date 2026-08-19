@@ -1,4 +1,4 @@
-import { getSanityClient } from "@/sanity/client";
+import { fetchSanity } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import { urlFor } from "@/sanity/image";
 import {
@@ -75,9 +75,7 @@ export async function getAllPhotos(): Promise<Photo[]> {
   }
 
   try {
-    const photos = await getSanityClient().fetch<SanityPhotoDocument[]>(
-      allPhotosQuery,
-    );
+    const photos = await fetchSanity<SanityPhotoDocument[]>(allPhotosQuery);
 
     if (!photos.length) {
       return PLACEHOLDER_PHOTOS;
@@ -95,9 +93,8 @@ export async function getFeaturedPhotos(): Promise<Photo[]> {
   }
 
   try {
-    const photos = await getSanityClient().fetch<SanityPhotoDocument[]>(
-      featuredPhotosQuery,
-    );
+    const photos =
+      await fetchSanity<SanityPhotoDocument[]>(featuredPhotosQuery);
 
     if (!photos.length) {
       return PLACEHOLDER_PHOTOS.filter((photo) => photo.featured);
@@ -115,11 +112,9 @@ export async function getPhotoById(id: string): Promise<Photo | undefined> {
   }
 
   try {
-    const photo = await getSanityClient().fetch<SanityPhotoDocument | null>(
+    const photo = await fetchSanity<SanityPhotoDocument | null>(
       photoByIdQuery,
-      {
-        id,
-      },
+      { id },
     );
 
     return photo ? mapPhoto(photo) : undefined;

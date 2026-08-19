@@ -1,5 +1,15 @@
-import { createClient, type SanityClient } from "next-sanity";
-import { apiVersion, dataset, isSanityConfigured, projectId } from "./env";
+import {
+  createClient,
+  type QueryParams,
+  type SanityClient,
+} from "next-sanity";
+import {
+  apiVersion,
+  dataset,
+  isSanityConfigured,
+  projectId,
+  sanityRevalidateSeconds,
+} from "./env";
 
 let sanityClient: SanityClient | null = null;
 
@@ -18,4 +28,13 @@ export function getSanityClient(): SanityClient {
   }
 
   return sanityClient;
+}
+
+export async function fetchSanity<T>(
+  query: string,
+  params: QueryParams = {},
+): Promise<T> {
+  return getSanityClient().fetch<T>(query, params, {
+    next: { revalidate: sanityRevalidateSeconds },
+  });
 }

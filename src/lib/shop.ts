@@ -1,4 +1,4 @@
-import { getSanityClient } from "@/sanity/client";
+import { fetchSanity } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import { urlFor } from "@/sanity/image";
 import {
@@ -61,7 +61,7 @@ export async function getPrintProducts(): Promise<PrintProduct[]> {
   }
 
   try {
-    const products = await getSanityClient().fetch<SanityPrintProductDocument[]>(
+    const products = await fetchSanity<SanityPrintProductDocument[]>(
       allPrintProductsQuery,
     );
 

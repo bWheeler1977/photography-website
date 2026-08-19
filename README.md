@@ -66,6 +66,8 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 The site falls back to placeholder content until Sanity is configured and populated.
 
+Sanity-backed pages revalidate every **5 minutes** on Vercel, so new photos and copy appear without redeploying the site.
+
 ### CORS for production Studio
 
 In [sanity.io/manage](https://www.sanity.io/manage) → your project → **API** → **CORS origins**, add:

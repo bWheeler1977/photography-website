@@ -2,20 +2,105 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
+import { useVisiblePhotoCount } from "@/components/home/useVisiblePhotoCount";
 import type { Photo } from "@/types";
+
+const AUTO_ADVANCE_MS = 5000;
 
 type FeaturedGalleryProps = {
   photos: Photo[];
 };
 
+type FeaturedPhotoCardProps = {
+  photo: Photo;
+  photoIndex: number;
+  onOpen: (index: number) => void;
+};
+
+function FeaturedPhotoCard({ photo, photoIndex, onOpen }: FeaturedPhotoCardProps) {
+  return (
+    <article className="group overflow-hidden rounded-2xl border border-border bg-surface">
+      <button
+        type="button"
+        onClick={() => onOpen(photoIndex)}
+        className="block w-full cursor-zoom-in text-left"
+        aria-label={`View full size: ${photo.title}`}
+      >
+        <div className="relative aspect-[4/5] overflow-hidden">
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            fill
+            className="object-cover transition duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
+        <div className="p-5">
+          <p className="text-xs uppercase tracking-[0.15em] text-muted">
+            {photo.category}
+          </p>
+          <h3 className="mt-2 text-lg font-medium">{photo.title}</h3>
+        </div>
+      </button>
+    </article>
+  );
+}
+
+function gridColumnsClass(visibleCount: number): string {
+  if (visibleCount === 1) return "grid-cols-1";
+  if (visibleCount === 2) return "grid-cols-2";
+  return "grid-cols-3";
+}
+
 export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
+  const visibleCount = useVisiblePhotoCount();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  const needsCarousel = photos.length > visibleCount;
+  const isLightboxOpen = selectedIndex !== null;
 
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
+
+  const showPreviousSlide = () => {
+    setSlideIndex((current) => (current - 1 + photos.length) % photos.length);
+  };
+
+  const showNextSlide = () => {
+    setSlideIndex((current) => (current + 1) % photos.length);
+  };
+
+  useEffect(() => {
+    if (!needsCarousel || isLightboxOpen || photos.length === 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setSlideIndex((current) => (current + 1) % photos.length);
+    }, AUTO_ADVANCE_MS);
+
+    return () => window.clearInterval(timer);
+  }, [needsCarousel, isLightboxOpen, photos.length]);
+
+  useEffect(() => {
+    setSlideIndex(0);
+  }, [visibleCount, photos.length]);
+
+  const visiblePhotos = Array.from({ length: visibleCount }, (_, offset) => {
+    const photoIndex = (slideIndex + offset) % photos.length;
+    return {
+      photo: photos[photoIndex],
+      photoIndex,
+    };
+  });
+
+  if (photos.length === 0) {
+    return null;
+  }
 
   return (
     <section className="border-t border-border/60 bg-surface/40 py-20">
@@ -35,41 +120,66 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
           </Link>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {photos.map((photo, index) => (
-            <motion.article
-              key={photo.id}
-              className="group overflow-hidden rounded-2xl border border-border bg-surface"
-              initial={{ opacity: 0, y: 32 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+        {needsCarousel ? (
+          <div className="relative">
+            <div className="overflow-hidden">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={`${slideIndex}-${visibleCount}`}
+                  className={`grid gap-6 ${gridColumnsClass(visibleCount)}`}
+                  initial={{ opacity: 0, x: 32 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -32 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                >
+                  {visiblePhotos.map(({ photo, photoIndex }) => (
+                    <FeaturedPhotoCard
+                      key={`${photo.id}-${photoIndex}`}
+                      photo={photo}
+                      photoIndex={photoIndex}
+                      onOpen={openPhoto}
+                    />
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <button
+              type="button"
+              onClick={showPreviousSlide}
+              className="absolute left-0 top-[calc(50%-2.5rem)] z-10 -translate-y-1/2 rounded-full border border-border bg-background/90 p-2.5 text-foreground transition hover:border-accent hover:text-accent sm:p-3 md:-left-5"
+              aria-label="Previous featured photos"
             >
-              <button
-                type="button"
-                onClick={() => openPhoto(index)}
-                className="block w-full cursor-zoom-in text-left"
-                aria-label={`View full size: ${photo.title}`}
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={showNextSlide}
+              className="absolute right-0 top-[calc(50%-2.5rem)] z-10 -translate-y-1/2 rounded-full border border-border bg-background/90 p-2.5 text-foreground transition hover:border-accent hover:text-accent sm:p-3 md:-right-5"
+              aria-label="Next featured photos"
+            >
+              →
+            </button>
+          </div>
+        ) : (
+          <div className={`grid gap-6 ${gridColumnsClass(visibleCount)}`}>
+            {photos.map((photo, index) => (
+              <motion.div
+                key={photo.id}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <div className="relative aspect-[4/5] overflow-hidden">
-                  <Image
-                    src={photo.src}
-                    alt={photo.alt}
-                    fill
-                    className="object-cover transition duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                </div>
-                <div className="p-5">
-                  <p className="text-xs uppercase tracking-[0.15em] text-muted">
-                    {photo.category}
-                  </p>
-                  <h3 className="mt-2 text-lg font-medium">{photo.title}</h3>
-                </div>
-              </button>
-            </motion.article>
-          ))}
-        </div>
+                <FeaturedPhotoCard
+                  photo={photo}
+                  photoIndex={index}
+                  onOpen={openPhoto}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       <PhotoLightbox

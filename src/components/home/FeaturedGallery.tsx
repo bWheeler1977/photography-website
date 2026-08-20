@@ -59,6 +59,7 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const visibleCount = useVisiblePhotoCount();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
 
   const needsCarousel = photos.length > visibleCount;
   const isLightboxOpen = selectedIndex !== null;
@@ -67,10 +68,12 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const closePhoto = () => setSelectedIndex(null);
 
   const showPreviousSlide = () => {
+    setDirection(-1);
     setSlideIndex((current) => (current - 1 + photos.length) % photos.length);
   };
 
   const showNextSlide = () => {
+    setDirection(1);
     setSlideIndex((current) => (current + 1) % photos.length);
   };
 
@@ -80,6 +83,7 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
     }
 
     const timer = window.setInterval(() => {
+      setDirection(1);
       setSlideIndex((current) => (current + 1) % photos.length);
     }, AUTO_ADVANCE_MS);
 
@@ -122,26 +126,52 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
 
         {needsCarousel ? (
           <div className="relative">
-            <div className="overflow-hidden">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={`${slideIndex}-${visibleCount}`}
-                  className={`grid gap-6 ${gridColumnsClass(visibleCount)}`}
-                  initial={{ opacity: 0, x: 32 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -32 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                >
-                  {visiblePhotos.map(({ photo, photoIndex }) => (
-                    <FeaturedPhotoCard
-                      key={`${photo.id}-${photoIndex}`}
-                      photo={photo}
-                      photoIndex={photoIndex}
-                      onOpen={openPhoto}
-                    />
-                  ))}
-                </motion.div>
-              </AnimatePresence>
+            <div className="relative overflow-hidden">
+              <div
+                className={`pointer-events-none invisible grid gap-6 ${gridColumnsClass(visibleCount)}`}
+                aria-hidden
+              >
+                {visiblePhotos.map(({ photo, photoIndex }) => (
+                  <FeaturedPhotoCard
+                    key={`sizer-${photo.id}-${photoIndex}`}
+                    photo={photo}
+                    photoIndex={photoIndex}
+                    onOpen={openPhoto}
+                  />
+                ))}
+              </div>
+
+              <div className="absolute inset-0 overflow-hidden">
+                <AnimatePresence initial={false} custom={direction}>
+                  <motion.div
+                    key={`${slideIndex}-${visibleCount}`}
+                    custom={direction}
+                    variants={{
+                      enter: (slideDirection: number) => ({
+                        x: slideDirection > 0 ? "100%" : "-100%",
+                      }),
+                      center: { x: 0 },
+                      exit: (slideDirection: number) => ({
+                        x: slideDirection > 0 ? "-100%" : "100%",
+                      }),
+                    }}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+                    className={`absolute inset-0 grid gap-6 ${gridColumnsClass(visibleCount)}`}
+                  >
+                    {visiblePhotos.map(({ photo, photoIndex }) => (
+                      <FeaturedPhotoCard
+                        key={`${photo.id}-${photoIndex}`}
+                        photo={photo}
+                        photoIndex={photoIndex}
+                        onOpen={openPhoto}
+                      />
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
 
             <button

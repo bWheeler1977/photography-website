@@ -2,14 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
 import { useVisiblePhotoCount } from "@/components/home/useVisiblePhotoCount";
 import type { Photo } from "@/types";
 
 const AUTO_ADVANCE_MS = 5000;
 const SLIDE_TRANSITION_DURATION = 0.6;
+const CAROUSEL_GAP_PX = 24;
 
 const slideTransition = {
   duration: SLIDE_TRANSITION_DURATION,
@@ -61,27 +62,110 @@ function gridColumnsClass(visibleCount: number): string {
   return "grid-cols-3";
 }
 
+type FeaturedCarouselTrackProps = {
+  photos: Photo[];
+  visibleCount: number;
+  slideIndex: number;
+  skipTransition: boolean;
+  onOpen: (index: number) => void;
+};
+
+function FeaturedCarouselTrack({
+  photos,
+  visibleCount,
+  slideIndex,
+  skipTransition,
+  onOpen,
+}: FeaturedCarouselTrackProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [itemWidth, setItemWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      const containerWidth = container.clientWidth;
+      setItemWidth(
+        (containerWidth - CAROUSEL_GAP_PX * (visibleCount - 1)) / visibleCount,
+      );
+    };
+
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [visibleCount]);
+
+  const translateX = slideIndex * (itemWidth + CAROUSEL_GAP_PX);
+
+  return (
+    <div ref={containerRef} className="overflow-hidden">
+      <motion.div
+        className="flex"
+        style={{ gap: CAROUSEL_GAP_PX }}
+        animate={{ x: itemWidth > 0 ? -translateX : 0 }}
+        transition={skipTransition ? { duration: 0 } : slideTransition}
+      >
+        {photos.map((photo, index) => (
+          <div
+            key={photo.id}
+            className="shrink-0"
+            style={{ width: itemWidth > 0 ? itemWidth : "100%" }}
+          >
+            <FeaturedPhotoCard
+              photo={photo}
+              photoIndex={index}
+              onOpen={onOpen}
+            />
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
 export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const visibleCount = useVisiblePhotoCount();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
+  const [skipTransition, setSkipTransition] = useState(false);
 
   const needsCarousel = photos.length > visibleCount;
+  const maxSlideIndex = Math.max(0, photos.length - visibleCount);
   const isLightboxOpen = selectedIndex !== null;
 
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
 
-  const showPreviousSlide = () => {
-    setDirection(-1);
-    setSlideIndex((current) => (current - 1 + photos.length) % photos.length);
+  const advanceSlide = (delta: 1 | -1) => {
+    setSlideIndex((current) => {
+      const next = current + delta;
+
+      if (next > maxSlideIndex) {
+        setSkipTransition(true);
+        return 0;
+      }
+
+      if (next < 0) {
+        setSkipTransition(true);
+        return maxSlideIndex;
+      }
+
+      return next;
+    });
   };
 
-  const showNextSlide = () => {
-    setDirection(1);
-    setSlideIndex((current) => (current + 1) % photos.length);
-  };
+  const showPreviousSlide = () => advanceSlide(-1);
+  const showNextSlide = () => advanceSlide(1);
+
+  useEffect(() => {
+    if (!skipTransition) return;
+
+    const frame = requestAnimationFrame(() => setSkipTransition(false));
+    return () => cancelAnimationFrame(frame);
+  }, [skipTransition, slideIndex]);
 
   useEffect(() => {
     if (!needsCarousel || isLightboxOpen || photos.length === 0) {
@@ -89,24 +173,23 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
     }
 
     const timer = window.setInterval(() => {
-      setDirection(1);
-      setSlideIndex((current) => (current + 1) % photos.length);
+      setSlideIndex((current) => {
+        if (current >= maxSlideIndex) {
+          setSkipTransition(true);
+          return 0;
+        }
+
+        return current + 1;
+      });
     }, AUTO_ADVANCE_MS);
 
     return () => window.clearInterval(timer);
-  }, [needsCarousel, isLightboxOpen, photos.length]);
+  }, [isLightboxOpen, maxSlideIndex, needsCarousel, photos.length]);
 
   useEffect(() => {
     setSlideIndex(0);
+    setSkipTransition(false);
   }, [visibleCount, photos.length]);
-
-  const visiblePhotos = Array.from({ length: visibleCount }, (_, offset) => {
-    const photoIndex = (slideIndex + offset) % photos.length;
-    return {
-      photo: photos[photoIndex],
-      photoIndex,
-    };
-  });
 
   if (photos.length === 0) {
     return null;
@@ -132,49 +215,13 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
 
         {needsCarousel ? (
           <div className="relative">
-            <div className="overflow-hidden">
-              <LayoutGroup id="featured-carousel">
-                <div
-                  className={`grid gap-6 ${gridColumnsClass(visibleCount)}`}
-                >
-                  <AnimatePresence
-                    mode="popLayout"
-                    initial={false}
-                    custom={direction}
-                  >
-                    {visiblePhotos.map(({ photo, photoIndex }) => (
-                      <motion.div
-                        key={photo.id}
-                        layout
-                        custom={direction}
-                        variants={{
-                          enter: (slideDirection: number) => ({
-                            x: slideDirection > 0 ? "100%" : "-100%",
-                          }),
-                          center: { x: 0 },
-                          exit: (slideDirection: number) => ({
-                            x: slideDirection > 0 ? "-100%" : "100%",
-                          }),
-                        }}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{
-                          layout: slideTransition,
-                          x: slideTransition,
-                        }}
-                      >
-                        <FeaturedPhotoCard
-                          photo={photo}
-                          photoIndex={photoIndex}
-                          onOpen={openPhoto}
-                        />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </LayoutGroup>
-            </div>
+            <FeaturedCarouselTrack
+              photos={photos}
+              visibleCount={visibleCount}
+              slideIndex={slideIndex}
+              skipTransition={skipTransition}
+              onOpen={openPhoto}
+            />
 
             <button
               type="button"

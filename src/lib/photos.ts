@@ -1,3 +1,8 @@
+import type { PhotoCategory } from "@/types";
+import {
+  buildGalleryCategories,
+  type GalleryCategory,
+} from "@/lib/categories";
 import { fetchSanity } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import { urlFor } from "@/sanity/image";
@@ -5,6 +10,7 @@ import {
   allPhotosQuery,
   featuredPhotosQuery,
   photoByIdQuery,
+  photosByCategoryQuery,
   type SanityPhotoDocument,
 } from "@/sanity/queries";
 import type { Photo } from "@/types";
@@ -134,4 +140,37 @@ export async function getPhotoById(id: string): Promise<Photo | undefined> {
   } catch {
     return PLACEHOLDER_PHOTOS.find((photo) => photo.id === id);
   }
+}
+
+export async function getGalleryCategories(): Promise<GalleryCategory[]> {
+  const photos = await getAllPhotos();
+  return buildGalleryCategories(photos);
+}
+
+async function fetchPhotosByCategoryFromSanity(
+  category: PhotoCategory,
+): Promise<Photo[]> {
+  try {
+    const photos = await fetchSanity<SanityPhotoDocument[]>(
+      photosByCategoryQuery,
+      { category },
+    );
+
+    return photos.map(mapPhoto);
+  } catch {
+    return PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
+  }
+}
+
+export async function getCategoryPhotos(
+  category: PhotoCategory,
+): Promise<Photo[]> {
+  if (!isSanityConfigured) {
+    return PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
+  }
+
+  const photos = await fetchPhotosByCategoryFromSanity(category);
+  return photos.length
+    ? photos
+    : PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
 }

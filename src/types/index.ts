@@ -4,10 +4,18 @@ export type Photo = {
   alt: string;
   src: string;
   fullSrc: string;
-  category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature";
+  category: PhotoCategory;
   featured?: boolean;
   instagramId?: string;
 };
+
+export type PhotoCategory =
+  | "landscape"
+  | "birds"
+  | "wildlife"
+  | "city"
+  | "portrait"
+  | "nature";
 
 export type PrintProduct = {
   id: string;

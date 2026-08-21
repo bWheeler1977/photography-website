@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { GalleryGrid } from "@/components/gallery/GalleryGrid";
-import { getAllPhotos } from "@/lib/photos";
+import { CategoryGrid } from "@/components/gallery/CategoryGrid";
+import { getGalleryCategories } from "@/lib/photos";
 
 export const metadata: Metadata = {
   title: "Gallery",
-  description: "Browse the full photography collection.",
+  description: "Browse photography collections by category.",
 };
 
 export default async function GalleryPage() {
-  const photos = await getAllPhotos();
+  const categories = await getGalleryCategories();
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">
@@ -18,11 +18,11 @@ export default async function GalleryPage() {
           Gallery
         </h1>
         <p className="mt-4 text-lg text-muted">
-          A curated collection of landscape, birds, wildlife, city, portrait, and nature photography.
-          Manage photos in Sanity Studio at <code className="text-foreground">/studio</code>.
+          Choose a collection to explore landscape, birds, wildlife, city,
+          portrait, and nature photography.
         </p>
       </header>
-      <GalleryGrid photos={photos} />
+      <CategoryGrid categories={categories} />
     </div>
   );
 }

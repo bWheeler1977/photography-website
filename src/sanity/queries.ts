@@ -37,6 +37,18 @@ export const photoByIdQuery = groq`
   }
 `;
 
+export const photosByCategoryQuery = groq`
+  *[_type == "photo" && category == $category] | order(coalesce(order, 999) asc, _createdAt desc) {
+    _id,
+    title,
+    "alt": image.alt,
+    image,
+    category,
+    featured,
+    instagramId
+  }
+`;
+
 export const allPrintProductsQuery = groq`
   *[_type == "printProduct" && published == true] | order(_createdAt desc) {
     _id,

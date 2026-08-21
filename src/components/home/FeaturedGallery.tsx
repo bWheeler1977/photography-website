@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
 import { useVisiblePhotoCount } from "@/components/home/useVisiblePhotoCount";
 import type { Photo } from "@/types";
@@ -62,20 +62,28 @@ function gridColumnsClass(visibleCount: number): string {
   return "grid-cols-3";
 }
 
+function buildTrackPhotos(photos: Photo[], visibleCount: number): Photo[] {
+  return [...photos, ...photos.slice(0, visibleCount)];
+}
+
 type FeaturedCarouselTrackProps = {
-  photos: Photo[];
+  trackPhotos: Photo[];
+  photosCount: number;
   visibleCount: number;
   slideIndex: number;
   skipTransition: boolean;
   onOpen: (index: number) => void;
+  onSlideAnimationComplete: () => void;
 };
 
 function FeaturedCarouselTrack({
-  photos,
+  trackPhotos,
+  photosCount,
   visibleCount,
   slideIndex,
   skipTransition,
   onOpen,
+  onSlideAnimationComplete,
 }: FeaturedCarouselTrackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [itemWidth, setItemWidth] = useState(0);
@@ -107,16 +115,17 @@ function FeaturedCarouselTrack({
         style={{ gap: CAROUSEL_GAP_PX }}
         animate={{ x: itemWidth > 0 ? -translateX : 0 }}
         transition={skipTransition ? { duration: 0 } : slideTransition}
+        onAnimationComplete={onSlideAnimationComplete}
       >
-        {photos.map((photo, index) => (
+        {trackPhotos.map((photo, index) => (
           <div
-            key={photo.id}
+            key={`${photo.id}-${index}`}
             className="shrink-0"
             style={{ width: itemWidth > 0 ? itemWidth : "100%" }}
           >
             <FeaturedPhotoCard
               photo={photo}
-              photoIndex={index}
+              photoIndex={index % photosCount}
               onOpen={onOpen}
             />
           </div>
@@ -132,40 +141,67 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const [slideIndex, setSlideIndex] = useState(0);
   const [skipTransition, setSkipTransition] = useState(false);
 
+  const slideIndexRef = useRef(slideIndex);
+  const wrapDirectionRef = useRef<"forward" | "backward" | null>(null);
+  slideIndexRef.current = slideIndex;
+
   const needsCarousel = photos.length > visibleCount;
-  const maxSlideIndex = Math.max(0, photos.length - visibleCount);
   const isLightboxOpen = selectedIndex !== null;
+  const trackPhotos = useMemo(
+    () => (needsCarousel ? buildTrackPhotos(photos, visibleCount) : photos),
+    [needsCarousel, photos, visibleCount],
+  );
 
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
 
-  const advanceSlide = (delta: 1 | -1) => {
-    setSlideIndex((current) => {
-      const next = current + delta;
-
-      if (next > maxSlideIndex) {
-        setSkipTransition(true);
-        return 0;
-      }
-
-      if (next < 0) {
-        setSkipTransition(true);
-        return maxSlideIndex;
-      }
-
-      return next;
-    });
+  const showNextSlide = () => {
+    setSlideIndex((current) => current + 1);
   };
 
-  const showPreviousSlide = () => advanceSlide(-1);
-  const showNextSlide = () => advanceSlide(1);
+  const showPreviousSlide = () => {
+    if (slideIndexRef.current === 0) {
+      wrapDirectionRef.current = "backward";
+      setSkipTransition(true);
+      setSlideIndex(photos.length);
+      return;
+    }
 
-  useEffect(() => {
-    if (!skipTransition) return;
+    setSlideIndex((current) => current - 1);
+  };
 
-    const frame = requestAnimationFrame(() => setSkipTransition(false));
+  const handleSlideAnimationComplete = () => {
+    if (skipTransition) return;
+
+    if (slideIndexRef.current === photos.length) {
+      wrapDirectionRef.current = "forward";
+      setSkipTransition(true);
+      setSlideIndex(0);
+      requestAnimationFrame(() => {
+        wrapDirectionRef.current = null;
+        setSkipTransition(false);
+      });
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (
+      !skipTransition ||
+      slideIndex !== photos.length ||
+      wrapDirectionRef.current !== "backward"
+    ) {
+      return;
+    }
+
+    wrapDirectionRef.current = null;
+
+    const frame = requestAnimationFrame(() => {
+      setSkipTransition(false);
+      setSlideIndex(photos.length - 1);
+    });
+
     return () => cancelAnimationFrame(frame);
-  }, [skipTransition, slideIndex]);
+  }, [photos.length, skipTransition, slideIndex]);
 
   useEffect(() => {
     if (!needsCarousel || isLightboxOpen || photos.length === 0) {
@@ -173,22 +209,16 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
     }
 
     const timer = window.setInterval(() => {
-      setSlideIndex((current) => {
-        if (current >= maxSlideIndex) {
-          setSkipTransition(true);
-          return 0;
-        }
-
-        return current + 1;
-      });
+      setSlideIndex((current) => current + 1);
     }, AUTO_ADVANCE_MS);
 
     return () => window.clearInterval(timer);
-  }, [isLightboxOpen, maxSlideIndex, needsCarousel, photos.length]);
+  }, [isLightboxOpen, needsCarousel, photos.length]);
 
   useEffect(() => {
     setSlideIndex(0);
     setSkipTransition(false);
+    wrapDirectionRef.current = null;
   }, [visibleCount, photos.length]);
 
   if (photos.length === 0) {
@@ -216,11 +246,13 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
         {needsCarousel ? (
           <div className="relative">
             <FeaturedCarouselTrack
-              photos={photos}
+              trackPhotos={trackPhotos}
+              photosCount={photos.length}
               visibleCount={visibleCount}
               slideIndex={slideIndex}
               skipTransition={skipTransition}
               onOpen={openPhoto}
+              onSlideAnimationComplete={handleSlideAnimationComplete}
             />
 
             <button

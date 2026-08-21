@@ -2,13 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
 import { useVisiblePhotoCount } from "@/components/home/useVisiblePhotoCount";
 import type { Photo } from "@/types";
 
 const AUTO_ADVANCE_MS = 5000;
+const SLIDE_TRANSITION_DURATION = 0.6;
+
+const slideTransition = {
+  duration: SLIDE_TRANSITION_DURATION,
+  ease: [0.4, 0, 0.2, 1] as const,
+};
 
 type FeaturedGalleryProps = {
   photos: Photo[];
@@ -126,52 +132,48 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
 
         {needsCarousel ? (
           <div className="relative">
-            <div className="relative overflow-hidden">
-              <div
-                className={`pointer-events-none invisible grid gap-6 ${gridColumnsClass(visibleCount)}`}
-                aria-hidden
-              >
-                {visiblePhotos.map(({ photo, photoIndex }) => (
-                  <FeaturedPhotoCard
-                    key={`sizer-${photo.id}-${photoIndex}`}
-                    photo={photo}
-                    photoIndex={photoIndex}
-                    onOpen={openPhoto}
-                  />
-                ))}
-              </div>
-
-              <div className="absolute inset-0 overflow-hidden">
-                <AnimatePresence initial={false} custom={direction}>
-                  <motion.div
-                    key={`${slideIndex}-${visibleCount}`}
+            <div className="overflow-hidden">
+              <LayoutGroup id="featured-carousel">
+                <div
+                  className={`grid gap-6 ${gridColumnsClass(visibleCount)}`}
+                >
+                  <AnimatePresence
+                    mode="popLayout"
+                    initial={false}
                     custom={direction}
-                    variants={{
-                      enter: (slideDirection: number) => ({
-                        x: slideDirection > 0 ? "100%" : "-100%",
-                      }),
-                      center: { x: 0 },
-                      exit: (slideDirection: number) => ({
-                        x: slideDirection > 0 ? "-100%" : "100%",
-                      }),
-                    }}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-                    className={`absolute inset-0 grid gap-6 ${gridColumnsClass(visibleCount)}`}
                   >
                     {visiblePhotos.map(({ photo, photoIndex }) => (
-                      <FeaturedPhotoCard
-                        key={`${photo.id}-${photoIndex}`}
-                        photo={photo}
-                        photoIndex={photoIndex}
-                        onOpen={openPhoto}
-                      />
+                      <motion.div
+                        key={photo.id}
+                        layout
+                        custom={direction}
+                        variants={{
+                          enter: (slideDirection: number) => ({
+                            x: slideDirection > 0 ? "100%" : "-100%",
+                          }),
+                          center: { x: 0 },
+                          exit: (slideDirection: number) => ({
+                            x: slideDirection > 0 ? "-100%" : "100%",
+                          }),
+                        }}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{
+                          layout: slideTransition,
+                          x: slideTransition,
+                        }}
+                      >
+                        <FeaturedPhotoCard
+                          photo={photo}
+                          photoIndex={photoIndex}
+                          onOpen={openPhoto}
+                        />
+                      </motion.div>
                     ))}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+                  </AnimatePresence>
+                </div>
+              </LayoutGroup>
             </div>
 
             <button

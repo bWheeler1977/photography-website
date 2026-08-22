@@ -1,3 +1,13 @@
+export type PhotoCameraMetadata = {
+  cameraModel?: string;
+  fStop?: string;
+  exposureTime?: string;
+  iso?: string;
+  focalLength?: string;
+  lensMaker?: string;
+  lensModel?: string;
+};
+
 export type Photo = {
   id: string;
   title: string;
@@ -7,6 +17,7 @@ export type Photo = {
   category: PhotoCategory;
   featured?: boolean;
   instagramId?: string;
+  cameraMetadata?: PhotoCameraMetadata;
 };
 
 export type PhotoCategory =

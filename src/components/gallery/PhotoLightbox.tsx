@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
+import { PhotoMetadataPanel } from "@/components/gallery/PhotoMetadataPanel";
+import { hasCameraMetadata } from "@/lib/cameraMetadata";
 import type { Photo } from "@/types";
 
 type PhotoLightboxProps = {
@@ -24,22 +26,30 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
   const [displayedIndex, setDisplayedIndex] = useState<number | null>(index);
   const [isBlurred, setIsBlurred] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMetadataOpen, setIsMetadataOpen] = useState(false);
 
   const displayedPhoto =
     displayedIndex !== null ? photos[displayedIndex] ?? null : null;
+  const showMetadataButton = hasCameraMetadata(displayedPhoto?.cameraMetadata);
 
   useEffect(() => {
     if (index === null) {
       setDisplayedIndex(null);
       setIsBlurred(false);
       setIsLoading(false);
+      setIsMetadataOpen(false);
       return;
     }
 
     setDisplayedIndex(index);
     setIsBlurred(true);
     setIsLoading(false);
+    setIsMetadataOpen(false);
   }, [index]);
+
+  useEffect(() => {
+    setIsMetadataOpen(false);
+  }, [displayedIndex]);
 
   useEffect(() => {
     if (displayedIndex === null || photos.length === 0) return;
@@ -89,11 +99,24 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
     goTo((displayedIndex + 1) % photos.length);
   }, [displayedIndex, goTo, photos.length]);
 
+  const handleClose = useCallback(() => {
+    setIsMetadataOpen(false);
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (!displayedPhoto) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        if (isMetadataOpen) {
+          setIsMetadataOpen(false);
+          return;
+        }
+
+        handleClose();
+      }
+
       if (event.key === "ArrowLeft") showPrevious();
       if (event.key === "ArrowRight") showNext();
     };
@@ -105,7 +128,13 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [displayedPhoto, onClose, showNext, showPrevious]);
+  }, [
+    displayedPhoto,
+    handleClose,
+    isMetadataOpen,
+    showNext,
+    showPrevious,
+  ]);
 
   const handleImageLoad = () => {
     setIsBlurred(false);
@@ -123,11 +152,11 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={handleClose}
         >
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute right-4 top-4 z-20 rounded-full border border-white/20 px-4 py-2 text-sm text-white transition hover:border-white/50 hover:bg-white/10"
             aria-label="Close photo"
           >
@@ -167,7 +196,7 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
             className="flex min-h-0 flex-1 flex-col pt-16"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative min-h-0 flex-1">
+            <div className="relative min-h-0 flex-1 overflow-hidden">
               <Image
                 key={displayedPhoto.id}
                 src={displayedPhoto.fullSrc}
@@ -182,6 +211,38 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
                 priority
                 onLoadingComplete={handleImageLoad}
               />
+
+              {showMetadataButton && displayedPhoto.cameraMetadata && (
+                <>
+                  {!isMetadataOpen && (
+                    <button
+                      type="button"
+                      onClick={() => setIsMetadataOpen(true)}
+                      className="absolute bottom-4 right-4 z-20 rounded-full border border-white/25 bg-black/55 p-2.5 text-white/90 backdrop-blur-sm transition hover:border-white/45 hover:bg-black/70 hover:text-white"
+                      aria-label="Show camera details"
+                      aria-expanded={false}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 10v6M12 7h.01" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  )}
+
+                  <PhotoMetadataPanel
+                    metadata={displayedPhoto.cameraMetadata}
+                    isOpen={isMetadataOpen}
+                    onClose={() => setIsMetadataOpen(false)}
+                  />
+                </>
+              )}
             </div>
 
             <motion.div

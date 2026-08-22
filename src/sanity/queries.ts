@@ -9,7 +9,12 @@ export const allPhotosQuery = groq`
     image,
     category,
     featured,
-    instagramId
+    instagramId,
+    cameraMetadata,
+    "assetMetadata": image.asset->metadata {
+      exif,
+      image
+    }
   }
 `;
 
@@ -21,7 +26,12 @@ export const featuredPhotosQuery = groq`
     image,
     category,
     featured,
-    instagramId
+    instagramId,
+    cameraMetadata,
+    "assetMetadata": image.asset->metadata {
+      exif,
+      image
+    }
   }
 `;
 
@@ -33,7 +43,12 @@ export const photoByIdQuery = groq`
     image,
     category,
     featured,
-    instagramId
+    instagramId,
+    cameraMetadata,
+    "assetMetadata": image.asset->metadata {
+      exif,
+      image
+    }
   }
 `;
 
@@ -45,7 +60,12 @@ export const photosByCategoryQuery = groq`
     image,
     category,
     featured,
-    instagramId
+    instagramId,
+    cameraMetadata,
+    "assetMetadata": image.asset->metadata {
+      exif,
+      image
+    }
   }
 `;
 
@@ -91,6 +111,19 @@ export type SanityPhotoDocument = {
   category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature";
   featured?: boolean;
   instagramId?: string;
+  cameraMetadata?: {
+    cameraModel?: string;
+    fStop?: string;
+    exposureTime?: string;
+    iso?: string;
+    focalLength?: string;
+    lensMaker?: string;
+    lensModel?: string;
+  };
+  assetMetadata?: {
+    exif?: Record<string, unknown>;
+    image?: Record<string, unknown>;
+  };
 };
 
 export type SanityPrintProductDocument = {

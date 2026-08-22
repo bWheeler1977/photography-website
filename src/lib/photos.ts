@@ -3,6 +3,7 @@ import {
   buildGalleryCategories,
   type GalleryCategory,
 } from "@/lib/categories";
+import { resolveCameraMetadata } from "@/lib/cameraMetadata";
 import { fetchSanity } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import { urlFor } from "@/sanity/image";
@@ -15,6 +16,16 @@ import {
 } from "@/sanity/queries";
 import type { Photo } from "@/types";
 
+const PLACEHOLDER_CAMERA_METADATA = {
+  cameraModel: "Sony A7 IV",
+  fStop: "f/8",
+  exposureTime: "1/500s",
+  iso: "400",
+  focalLength: "200mm",
+  lensMaker: "Sony",
+  lensModel: "FE 200-600mm F5.6-6.3 G OSS",
+} as const;
+
 const PLACEHOLDER_PHOTOS: Photo[] = [
   {
     id: "1",
@@ -25,6 +36,7 @@ const PLACEHOLDER_PHOTOS: Photo[] = [
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2400&q=85",
     category: "landscape",
     featured: true,
+    cameraMetadata: PLACEHOLDER_CAMERA_METADATA,
   },
   {
     id: "2",
@@ -85,6 +97,10 @@ function mapPhoto(doc: SanityPhotoDocument): Photo {
     category: doc.category,
     featured: doc.featured,
     instagramId: doc.instagramId,
+    cameraMetadata: resolveCameraMetadata(
+      doc.assetMetadata,
+      doc.cameraMetadata,
+    ),
   };
 }
 

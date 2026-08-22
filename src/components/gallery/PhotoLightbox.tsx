@@ -29,6 +29,10 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
   const [isBlurred, setIsBlurred] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   const displayedPhoto =
     displayedIndex !== null ? photos[displayedIndex] ?? null : null;
@@ -51,6 +55,7 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
 
   useEffect(() => {
     setIsMetadataOpen(false);
+    setImageDimensions(null);
   }, [displayedIndex]);
 
   useEffect(() => {
@@ -206,24 +211,31 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
             className="flex min-h-0 flex-1 flex-col pt-16"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative min-h-0 flex-1 px-4 pb-2">
-              <div
-                className="relative h-full w-full touch-pan-y overflow-hidden rounded-2xl border border-white/20"
-                {...lightboxSwipeHandlers}
-              >
+            <div
+              className="flex min-h-0 flex-1 items-center justify-center px-4 pb-2 touch-pan-y"
+              {...lightboxSwipeHandlers}
+            >
+              <div className="relative inline-flex max-h-[calc(100vh-12rem)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/20">
                 <Image
                   key={displayedPhoto.id}
                   src={displayedPhoto.fullSrc}
                   alt={displayedPhoto.alt}
-                  fill
-                  className={`rounded-2xl object-contain transition-[filter,opacity,transform] duration-300 ease-out ${
+                  width={imageDimensions?.width ?? 1600}
+                  height={imageDimensions?.height ?? 1200}
+                  className={`block h-auto max-h-[calc(100vh-12rem)] max-w-[calc(100vw-2rem)] w-auto transition-[filter,opacity,transform] duration-300 ease-out ${
                     isBlurred
                       ? "scale-[1.02] blur-xl opacity-80"
                       : "scale-100 blur-0 opacity-100"
                   }`}
                   sizes="100vw"
                   priority
-                  onLoadingComplete={handleImageLoad}
+                  onLoadingComplete={(image) => {
+                    setImageDimensions({
+                      width: image.naturalWidth,
+                      height: image.naturalHeight,
+                    });
+                    handleImageLoad();
+                  }}
                 />
 
                 {showMetadataButton && displayedPhoto.cameraMetadata && (

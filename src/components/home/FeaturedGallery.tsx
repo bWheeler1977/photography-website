@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
 import { useVisiblePhotoCount } from "@/components/home/useVisiblePhotoCount";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import type { Photo } from "@/types";
 
 const AUTO_ADVANCE_MS = 5000;
@@ -140,11 +142,13 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [skipTransition, setSkipTransition] = useState(false);
+  const [autoAdvanceEpoch, setAutoAdvanceEpoch] = useState(0);
 
   const slideIndexRef = useRef(slideIndex);
   const wrapDirectionRef = useRef<"forward" | "backward" | null>(null);
   slideIndexRef.current = slideIndex;
 
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const needsCarousel = photos.length > visibleCount;
   const isLightboxOpen = selectedIndex !== null;
   const trackPhotos = useMemo(
@@ -155,11 +159,18 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
 
-  const showNextSlide = () => {
-    setSlideIndex((current) => current + 1);
-  };
+  const resetAutoAdvanceTimer = useCallback(() => {
+    setAutoAdvanceEpoch((epoch) => epoch + 1);
+  }, []);
 
-  const showPreviousSlide = () => {
+  const showNextSlide = useCallback(() => {
+    resetAutoAdvanceTimer();
+    setSlideIndex((current) => current + 1);
+  }, [resetAutoAdvanceTimer]);
+
+  const showPreviousSlide = useCallback(() => {
+    resetAutoAdvanceTimer();
+
     if (slideIndexRef.current === 0) {
       wrapDirectionRef.current = "backward";
       setSkipTransition(true);
@@ -168,7 +179,13 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
     }
 
     setSlideIndex((current) => current - 1);
-  };
+  }, [photos.length, resetAutoAdvanceTimer]);
+
+  const carouselSwipeHandlers = useSwipeNavigation({
+    enabled: needsCarousel && isMobile && !isLightboxOpen,
+    onSwipeLeft: showNextSlide,
+    onSwipeRight: showPreviousSlide,
+  });
 
   const handleSlideAnimationComplete = () => {
     if (skipTransition) return;
@@ -213,7 +230,7 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
     }, AUTO_ADVANCE_MS);
 
     return () => window.clearInterval(timer);
-  }, [isLightboxOpen, needsCarousel, photos.length]);
+  }, [autoAdvanceEpoch, isLightboxOpen, needsCarousel, photos.length]);
 
   useEffect(() => {
     setSlideIndex(0);
@@ -244,7 +261,10 @@ export function FeaturedGallery({ photos }: FeaturedGalleryProps) {
         </div>
 
         {needsCarousel ? (
-          <div className="relative">
+          <div
+            className="relative touch-pan-y"
+            {...carouselSwipeHandlers}
+          >
             <FeaturedCarouselTrack
               trackPhotos={trackPhotos}
               photosCount={photos.length}

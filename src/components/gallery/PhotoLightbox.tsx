@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { PhotoMetadataPanel } from "@/components/gallery/PhotoMetadataPanel";
 import { hasCameraMetadata } from "@/lib/cameraMetadata";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import type { Photo } from "@/types";
 
 type PhotoLightboxProps = {
@@ -98,6 +100,14 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
     if (displayedIndex === null || photos.length <= 1) return;
     goTo((displayedIndex + 1) % photos.length);
   }, [displayedIndex, goTo, photos.length]);
+
+  const isMobile = useMediaQuery("(max-width: 767px)");
+
+  const lightboxSwipeHandlers = useSwipeNavigation({
+    enabled: isMobile && photos.length > 1 && !isMetadataOpen,
+    onSwipeLeft: showNext,
+    onSwipeRight: showPrevious,
+  });
 
   const handleClose = useCallback(() => {
     setIsMetadataOpen(false);
@@ -196,53 +206,58 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
             className="flex min-h-0 flex-1 flex-col pt-16"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative min-h-0 flex-1 overflow-hidden">
-              <Image
-                key={displayedPhoto.id}
-                src={displayedPhoto.fullSrc}
-                alt={displayedPhoto.alt}
-                fill
-                className={`object-contain transition-[filter,opacity,transform] duration-300 ease-out ${
-                  isBlurred
-                    ? "scale-[1.02] blur-xl opacity-80"
-                    : "scale-100 blur-0 opacity-100"
-                }`}
-                sizes="100vw"
-                priority
-                onLoadingComplete={handleImageLoad}
-              />
+            <div className="relative min-h-0 flex-1 px-4 pb-2">
+              <div
+                className="relative h-full w-full touch-pan-y overflow-hidden rounded-2xl border border-white/20"
+                {...lightboxSwipeHandlers}
+              >
+                <Image
+                  key={displayedPhoto.id}
+                  src={displayedPhoto.fullSrc}
+                  alt={displayedPhoto.alt}
+                  fill
+                  className={`rounded-2xl object-contain transition-[filter,opacity,transform] duration-300 ease-out ${
+                    isBlurred
+                      ? "scale-[1.02] blur-xl opacity-80"
+                      : "scale-100 blur-0 opacity-100"
+                  }`}
+                  sizes="100vw"
+                  priority
+                  onLoadingComplete={handleImageLoad}
+                />
 
-              {showMetadataButton && displayedPhoto.cameraMetadata && (
-                <>
-                  {!isMetadataOpen && (
-                    <button
-                      type="button"
-                      onClick={() => setIsMetadataOpen(true)}
-                      className="absolute bottom-4 right-4 z-20 rounded-full border border-white/25 bg-black/55 p-2.5 text-white/90 backdrop-blur-sm transition hover:border-white/45 hover:bg-black/70 hover:text-white"
-                      aria-label="Show camera details"
-                      aria-expanded={false}
-                    >
-                      <svg
-                        aria-hidden="true"
-                        viewBox="0 0 24 24"
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.75"
+                {showMetadataButton && displayedPhoto.cameraMetadata && (
+                  <>
+                    {!isMetadataOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setIsMetadataOpen(true)}
+                        className="absolute bottom-4 right-4 z-20 rounded-full border border-white/25 bg-black/55 p-2.5 text-white/90 backdrop-blur-sm transition hover:border-white/45 hover:bg-black/70 hover:text-white"
+                        aria-label="Show camera details"
+                        aria-expanded={false}
                       >
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 10v6M12 7h.01" strokeLinecap="round" />
-                      </svg>
-                    </button>
-                  )}
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                        >
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 10v6M12 7h.01" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    )}
 
-                  <PhotoMetadataPanel
-                    metadata={displayedPhoto.cameraMetadata}
-                    isOpen={isMetadataOpen}
-                    onClose={() => setIsMetadataOpen(false)}
-                  />
-                </>
-              )}
+                    <PhotoMetadataPanel
+                      metadata={displayedPhoto.cameraMetadata}
+                      isOpen={isMetadataOpen}
+                      onClose={() => setIsMetadataOpen(false)}
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
             <motion.div

@@ -88,6 +88,15 @@ const PLACEHOLDER_PHOTOS: Photo[] = [
 ];
 
 function mapPhoto(doc: SanityPhotoDocument): Photo {
+  const cameraMetadata = resolveCameraMetadata(
+    doc.assetMetadata,
+    doc.cameraMetadata,
+    {
+      debugLabel: doc.title,
+      log: process.env.NODE_ENV === "development",
+    },
+  );
+
   return {
     id: doc._id,
     title: doc.title,
@@ -97,10 +106,7 @@ function mapPhoto(doc: SanityPhotoDocument): Photo {
     category: doc.category,
     featured: doc.featured,
     instagramId: doc.instagramId,
-    cameraMetadata: resolveCameraMetadata(
-      doc.assetMetadata,
-      doc.cameraMetadata,
-    ),
+    cameraMetadata,
   };
 }
 

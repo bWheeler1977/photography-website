@@ -1,5 +1,7 @@
 import type { PhotoCameraMetadata } from "@/types";
 
+const DEBUG_PREFIX = "[camera-metadata]";
+
 type SanityManualCameraMetadata = {
   cameraModel?: string;
   fStop?: string;
@@ -10,9 +12,14 @@ type SanityManualCameraMetadata = {
   lensModel?: string;
 };
 
-type SanityAssetMetadata = {
-  exif?: Record<string, unknown>;
-  image?: Record<string, unknown>;
+export type SanityAssetMetadata = {
+  exif?: Record<string, unknown> | null;
+  image?: Record<string, unknown> | null;
+};
+
+type ResolveCameraMetadataOptions = {
+  debugLabel?: string;
+  log?: boolean;
 };
 
 function readExifValue(
@@ -37,6 +44,28 @@ function toNumber(value: unknown): number | undefined {
   if (typeof value === "string" && value.trim() !== "") {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "numerator" in value &&
+    "denominator" in value
+  ) {
+    const numerator = toNumber(
+      (value as { numerator: unknown }).numerator,
+    );
+    const denominator = toNumber(
+      (value as { denominator: unknown }).denominator,
+    );
+
+    if (
+      numerator !== undefined &&
+      denominator !== undefined &&
+      denominator !== 0
+    ) {
+      return numerator / denominator;
+    }
   }
 
   return undefined;
@@ -92,13 +121,15 @@ function formatFocalLength(value: unknown): string | undefined {
 
 function buildCameraModel(
   exif: Record<string, unknown>,
-  imageMeta?: Record<string, unknown>,
+  imageMeta?: Record<string, unknown> | null,
 ): string | undefined {
   const make =
     toStringValue(readExifValue(exif, ["Make"])) ??
+    toStringValue(imageMeta?.Make) ??
     toStringValue(imageMeta?.make);
   const model =
     toStringValue(readExifValue(exif, ["Model"])) ??
+    toStringValue(imageMeta?.Model) ??
     toStringValue(imageMeta?.model);
 
   if (make && model) {
@@ -109,29 +140,40 @@ function buildCameraModel(
 }
 
 function metadataFromExif(
-  assetMetadata?: SanityAssetMetadata,
+  assetMetadata?: SanityAssetMetadata | null,
 ): PhotoCameraMetadata {
-  const exif = assetMetadata?.exif;
-  if (!exif) return {};
+  const exif = assetMetadata?.exif ?? undefined;
+  const imageMeta = assetMetadata?.image ?? undefined;
 
-  const imageMeta = assetMetadata.image;
+  if (!exif && !imageMeta) return {};
+
+  const exifRecord = exif ?? {};
 
   return {
-    cameraModel: buildCameraModel(exif, imageMeta),
-    fStop: formatFStop(readExifValue(exif, ["FNumber", "ApertureValue"])),
-    exposureTime: formatExposureTime(
-      readExifValue(exif, ["ExposureTime", "ShutterSpeedValue"]),
+    cameraModel: buildCameraModel(exifRecord, imageMeta),
+    fStop: formatFStop(
+      readExifValue(exifRecord, ["FNumber", "ApertureValue", "MaxApertureValue"]),
     ),
-    iso: formatIso(
-      readExifValue(exif, [
-        "ISOSpeedRatings",
-        "PhotographicSensitivity",
-        "ISO",
+    exposureTime: formatExposureTime(
+      readExifValue(exifRecord, [
+        "ExposureTime",
+        "ShutterSpeedValue",
+        "ExposureTimeValue",
       ]),
     ),
-    focalLength: formatFocalLength(readExifValue(exif, ["FocalLength"])),
-    lensMaker: toStringValue(readExifValue(exif, ["LensMake"])),
-    lensModel: toStringValue(readExifValue(exif, ["LensModel"])),
+    iso: formatIso(
+      readExifValue(exifRecord, [
+        "ISO",
+        "ISOSpeedRatings",
+        "PhotographicSensitivity",
+        "RecommendedExposureIndex",
+      ]),
+    ),
+    focalLength: formatFocalLength(
+      readExifValue(exifRecord, ["FocalLength", "FocalLengthIn35mmFormat"]),
+    ),
+    lensMaker: toStringValue(readExifValue(exifRecord, ["LensMake", "Make"])),
+    lensModel: toStringValue(readExifValue(exifRecord, ["LensModel"])),
   };
 }
 
@@ -162,9 +204,57 @@ export function hasCameraMetadata(
   );
 }
 
+export function logCameraMetadataDebug(
+  stage: string,
+  payload: Record<string, unknown>,
+) {
+  console.log(DEBUG_PREFIX, stage, payload);
+}
+
 export function resolveCameraMetadata(
-  assetMetadata?: SanityAssetMetadata,
+  assetMetadata?: SanityAssetMetadata | null,
   manual?: SanityManualCameraMetadata,
+  options?: ResolveCameraMetadataOptions,
 ): PhotoCameraMetadata | undefined {
-  return mergeCameraMetadata(metadataFromExif(assetMetadata), manual);
+  const fromExif = metadataFromExif(assetMetadata);
+  const merged = mergeCameraMetadata(fromExif, manual);
+
+  if (options?.log) {
+    logCameraMetadataDebug("resolve", {
+      label: options.debugLabel,
+      assetMetadata,
+      manualCameraMetadata: manual,
+      parsedFromAsset: fromExif,
+      resolved: merged,
+    });
+  }
+
+  return merged;
+}
+
+export function buildCameraMetadataPatch(
+  resolved: PhotoCameraMetadata,
+  current?: SanityManualCameraMetadata | null,
+): SanityManualCameraMetadata | null {
+  const patch: SanityManualCameraMetadata = {};
+  const fields = [
+    "cameraModel",
+    "fStop",
+    "exposureTime",
+    "iso",
+    "focalLength",
+    "lensMaker",
+    "lensModel",
+  ] as const;
+
+  for (const field of fields) {
+    const currentValue = current?.[field]?.trim();
+    const resolvedValue = resolved[field]?.trim();
+
+    if (!currentValue && resolvedValue) {
+      patch[field] = resolvedValue;
+    }
+  }
+
+  return Object.keys(patch).length > 0 ? patch : null;
 }

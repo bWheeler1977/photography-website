@@ -4,7 +4,10 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { PhotoMetadataPanel } from "@/components/gallery/PhotoMetadataPanel";
-import { hasCameraMetadata } from "@/lib/cameraMetadata";
+import {
+  hasCameraMetadata,
+  logCameraMetadataDebug,
+} from "@/lib/cameraMetadata";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import type { Photo } from "@/types";
@@ -52,6 +55,16 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
     setIsLoading(false);
     setIsMetadataOpen(false);
   }, [index]);
+
+  useEffect(() => {
+    if (!displayedPhoto) return;
+
+    logCameraMetadataDebug("lightbox-photo", {
+      title: displayedPhoto.title,
+      cameraMetadata: displayedPhoto.cameraMetadata,
+      hasMetadata: hasCameraMetadata(displayedPhoto.cameraMetadata),
+    });
+  }, [displayedPhoto]);
 
   useEffect(() => {
     setIsMetadataOpen(false);

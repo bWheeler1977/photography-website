@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { PhotoImageInput } from "@/sanity/components/PhotoImageInput";
 
 export const photo = defineType({
   name: "photo",
@@ -24,7 +25,10 @@ export const photo = defineType({
       type: "image",
       options: {
         hotspot: true,
-        metadata: ["exif"],
+        metadata: ["exif", "image"],
+      },
+      components: {
+        input: PhotoImageInput,
       },
       fields: [
         defineField({

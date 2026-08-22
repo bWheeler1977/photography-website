@@ -195,12 +195,12 @@ function mergeCameraMetadata(
 }
 
 export function hasCameraMetadata(
-  metadata?: PhotoCameraMetadata,
+  metadata?: PhotoCameraMetadata | Record<string, string | undefined> | null,
 ): metadata is PhotoCameraMetadata {
   if (!metadata) return false;
 
   return Object.values(metadata).some(
-    (value) => value !== undefined && value.trim() !== "",
+    (value) => typeof value === "string" && value.trim() !== "",
   );
 }
 

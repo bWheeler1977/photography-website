@@ -74,7 +74,7 @@ export const photo = defineType({
       title: "Camera metadata",
       type: "object",
       description:
-        "Optional manual camera details. EXIF from the uploaded image is used when a field is left blank.",
+        "Camera details shown in the site lightbox. Copy from your image file properties on your computer, or leave blank to use auto-detected values when available.",
       fields: [
         defineField({
           name: "cameraModel",

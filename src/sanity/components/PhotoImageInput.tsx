@@ -1,17 +1,17 @@
 "use client";
 
 import { Card, Stack, Text } from "@sanity/ui";
-import exifr from "exifr";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ImageValue, ObjectInputProps } from "sanity";
 import { useClient, useFormValue } from "sanity";
 import {
   buildCameraMetadataPatch,
-  isPngFile,
+  hasCameraMetadata,
   logCameraMetadataDebug,
   resolveCameraMetadata,
   type SanityAssetMetadata,
 } from "@/lib/cameraMetadata";
+import { parseCameraMetadataFromFile } from "@/lib/parseCameraMetadataFromFile";
 
 type AssetMetadataResponse = SanityAssetMetadata & {
   dimensions?: {
@@ -29,6 +29,9 @@ type AssetDetailsResponse = {
 
 type MetadataPatch = Record<string, string>;
 
+const MANUAL_METADATA_HINT =
+  "Auto-detect did not find camera metadata in this file. You can copy values from the image file properties on your computer into the Camera metadata fields below.";
+
 export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
   const client = useClient({ apiVersion: "2024-01-01" });
   const documentId = useFormValue(["_id"]) as string | undefined;
@@ -43,6 +46,7 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
 
   const assetRef = props.value?.asset?._ref;
+  const hasManualMetadata = hasCameraMetadata(cameraMetadata);
 
   const applyMetadataPatch = useCallback(
     async (patch: MetadataPatch, source: string) => {
@@ -112,71 +116,34 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         fileSize: file.size,
       });
 
-      if (isPngFile(file)) {
-        const message =
-          "This file is a PNG. PNG exports usually do not contain camera metadata. Upload the original in-camera JPEG (for example _DSC1766.jpg) to auto-fill camera details.";
-        setUploadNotice(message);
-        logCameraMetadataDebug("studio-file-png-warning", {
+      setUploadNotice(null);
+
+      const resolved = await parseCameraMetadataFromFile(file, photoTitle);
+
+      if (!resolved) {
+        if (!hasManualMetadata) {
+          setUploadNotice(MANUAL_METADATA_HINT);
+        }
+
+        logCameraMetadataDebug("studio-file-no-metadata", {
           photoTitle,
           fileName: file.name,
-          message,
+          message: MANUAL_METADATA_HINT,
         });
-      } else {
-        setUploadNotice(null);
+        return;
       }
 
-      try {
-        const exif = await exifr.parse(file);
-
-        logCameraMetadataDebug("studio-file-exifr", {
+      const patch = buildCameraMetadataPatch(resolved, cameraMetadata);
+      if (!patch) {
+        logCameraMetadataDebug("studio-file-no-patch", {
           photoTitle,
           fileName: file.name,
-          exif,
+          resolved,
         });
-
-        if (!exif || typeof exif !== "object") {
-          if (!isPngFile(file)) {
-            setUploadNotice(
-              "No camera metadata was found in this file. You can fill in the Camera metadata fields manually below.",
-            );
-          }
-          return;
-        }
-
-        const resolved = resolveCameraMetadata(
-          { exif: exif as Record<string, unknown> },
-          cameraMetadata,
-          {
-            debugLabel: photoTitle,
-            log: true,
-          },
-        );
-
-        if (!resolved) {
-          setUploadNotice(
-            "Camera metadata was detected in the file, but none of the supported fields could be parsed.",
-          );
-          return;
-        }
-
-        const patch = buildCameraMetadataPatch(resolved, cameraMetadata);
-        if (!patch) {
-          logCameraMetadataDebug("studio-file-no-patch", {
-            photoTitle,
-            fileName: file.name,
-            resolved,
-          });
-          return;
-        }
-
-        await applyMetadataPatch(patch, "local-file-exifr");
-      } catch (error) {
-        console.error("[camera-metadata] studio-file-exifr-error", {
-          photoTitle,
-          fileName: file.name,
-          error,
-        });
+        return;
       }
+
+      await applyMetadataPatch(patch, "local-file-exifr");
     };
 
     const attachListener = (input: HTMLInputElement) => {
@@ -201,7 +168,7 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
       detach?.();
       observer.disconnect();
     };
-  }, [applyMetadataPatch, cameraMetadata, photoTitle]);
+  }, [applyMetadataPatch, cameraMetadata, hasManualMetadata, photoTitle]);
 
   useEffect(() => {
     if (!assetRef) {
@@ -248,12 +215,6 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         metadata: asset?.metadata,
       });
 
-      if (asset?.extension === "png" || asset?.mimeType === "image/png") {
-        setUploadNotice(
-          "Sanity stored this upload as PNG and no EXIF was found on the asset. Upload the original in-camera JPEG to auto-fill camera metadata, or enter it manually below.",
-        );
-      }
-
       const resolved = resolveCameraMetadata(asset?.metadata, cameraMetadata, {
         debugLabel: photoTitle,
         log: true,
@@ -264,12 +225,15 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
           photoTitle,
           assetRef,
           reason:
-            asset?.metadata?.exif || asset?.metadata?.image
-              ? "EXIF/image tags were present but no supported camera fields were found."
-              : "No EXIF or image metadata on this asset. JPEG originals usually retain camera data; PNG exports and re-saved edits often strip it. Re-upload the original JPEG or fill Camera metadata manually.",
+            "Sanity did not store camera metadata on this asset. Use the Camera metadata fields below if auto-detect did not fill them.",
           extension: asset?.extension,
           mimeType: asset?.mimeType,
         });
+
+        if (!hasManualMetadata) {
+          setUploadNotice(MANUAL_METADATA_HINT);
+        }
+
         lastProcessedKey.current = processKey;
         return;
       }
@@ -309,13 +273,20 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
     cameraMetadata,
     client,
     documentId,
+    hasManualMetadata,
     photoTitle,
   ]);
+
+  useEffect(() => {
+    if (hasManualMetadata) {
+      setUploadNotice(null);
+    }
+  }, [hasManualMetadata]);
 
   return (
     <Stack space={3}>
       {uploadNotice && (
-        <Card padding={3} radius={2} shadow={1} tone="caution">
+        <Card padding={3} radius={2} shadow={1} tone="primary">
           <Text size={1}>{uploadNotice}</Text>
         </Card>
       )}

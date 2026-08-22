@@ -258,3 +258,9 @@ export function buildCameraMetadataPatch(
 
   return Object.keys(patch).length > 0 ? patch : null;
 }
+
+export function isPngFile(file: Pick<File, "name" | "type">): boolean {
+  return (
+    file.type === "image/png" || file.name.toLowerCase().endsWith(".png")
+  );
+}

@@ -175,7 +175,9 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         return;
       }
 
-      const patch = buildCameraMetadataPatch(resolved, cameraMetadata);
+      const patch = buildCameraMetadataPatch(resolved, cameraMetadata, {
+        overwrite: true,
+      });
       if (!patch) {
         logCameraMetadataDebug("studio-file-no-patch", {
           photoTitle,
@@ -313,7 +315,9 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         return;
       }
 
-      const patch = buildCameraMetadataPatch(resolved, cameraMetadata);
+      const patch = buildCameraMetadataPatch(resolved, cameraMetadata, {
+        overwrite: true,
+      });
 
       if (!patch) {
         logCameraMetadataDebug("studio-upload-no-patch", {

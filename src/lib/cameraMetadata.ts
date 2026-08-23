@@ -120,20 +120,44 @@ function formatFocalLength(value: unknown): string | undefined {
   return `${Math.round(number)}mm`;
 }
 
+function normalizeCameraModel(model: string, make?: string): string {
+  const trimmedModel = model.trim();
+  const trimmedMake = make?.trim();
+
+  if (!trimmedMake || trimmedModel === trimmedMake) {
+    return trimmedModel;
+  }
+
+  if (trimmedModel.startsWith(`${trimmedMake} `)) {
+    return trimmedModel.slice(trimmedMake.length).trim();
+  }
+
+  return trimmedModel;
+}
+
 function buildCameraModel(
   exif: Record<string, unknown>,
   imageMeta?: Record<string, unknown> | null,
 ): string | undefined {
-  return (
-    toStringValue(readExifValue(exif, ["Model"])) ??
+  const make =
+    toStringValue(imageMeta?.Make) ??
+    toStringValue(readExifValue(exif, ["Make"]));
+
+  const model =
     toStringValue(imageMeta?.Model) ??
-    toStringValue(imageMeta?.model)
-  );
+    toStringValue(imageMeta?.model) ??
+    toStringValue(readExifValue(exif, ["Model"]));
+
+  if (!model) return undefined;
+
+  return normalizeCameraModel(model, make);
 }
 
-function extractCopyright(exif: Record<string, unknown>): string | undefined {
+function extractCopyright(
+  metadata: Record<string, unknown>,
+): string | undefined {
   const direct = toStringValue(
-    readExifValue(exif, [
+    readExifValue(metadata, [
       "Copyright",
       "CopyrightNotice",
       "Rights",
@@ -144,7 +168,7 @@ function extractCopyright(exif: Record<string, unknown>): string | undefined {
 
   if (direct) return direct;
 
-  for (const [key, value] of Object.entries(exif)) {
+  for (const [key, value] of Object.entries(metadata)) {
     if (/copyright|rights|credit/i.test(key)) {
       const parsed = toStringValue(value);
       if (parsed) return parsed;
@@ -189,7 +213,9 @@ function metadataFromExif(
     ),
     lensMaker: toStringValue(readExifValue(exifRecord, ["LensMake", "Make"])),
     lensModel: toStringValue(readExifValue(exifRecord, ["LensModel"])),
-    copyright: extractCopyright(exifRecord),
+    copyright:
+      extractCopyright(exifRecord) ??
+      (imageMeta ? extractCopyright(imageMeta) : undefined),
   };
 }
 
@@ -252,6 +278,7 @@ export function resolveCameraMetadata(
 export function buildCameraMetadataPatch(
   resolved: PhotoCameraMetadata,
   current?: SanityManualCameraMetadata | null,
+  options?: { overwrite?: boolean },
 ): SanityManualCameraMetadata | null {
   const patch: SanityManualCameraMetadata = {};
   const fields = [
@@ -269,7 +296,16 @@ export function buildCameraMetadataPatch(
     const currentValue = current?.[field]?.trim();
     const resolvedValue = resolved[field]?.trim();
 
-    if (!currentValue && resolvedValue) {
+    if (!resolvedValue) continue;
+
+    if (options?.overwrite) {
+      if (resolvedValue !== currentValue) {
+        patch[field] = resolvedValue;
+      }
+      continue;
+    }
+
+    if (!currentValue) {
       patch[field] = resolvedValue;
     }
   }

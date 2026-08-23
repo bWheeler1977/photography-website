@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export function SiteFooter() {
+type SiteFooterProps = {
+  instagramUrl: string;
+};
+
+export function SiteFooter({ instagramUrl }: SiteFooterProps) {
   return (
     <footer className="border-t border-border/60">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-10 text-sm text-muted md:flex-row md:items-center md:justify-between">
@@ -13,7 +17,7 @@ export function SiteFooter() {
             Print Shop
           </Link>
           <a
-            href="https://instagram.com"
+            href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="transition hover:text-foreground"

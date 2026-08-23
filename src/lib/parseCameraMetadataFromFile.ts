@@ -7,9 +7,9 @@ import {
 import type { PhotoCameraMetadata } from "@/types";
 
 const PARSE_OPTIONS = [
+  { tiff: true, xmp: true, iptc: true, mergeOutput: true, firstChunkSize: 256 * 1024 },
+  { tiff: true, xmp: true, iptc: true, mergeOutput: true, firstChunkSize: 512 * 1024 },
   { tiff: true, xmp: true, mergeOutput: true, firstChunkSize: 256 * 1024 },
-  { tiff: true, xmp: true, mergeOutput: true, firstChunkSize: 512 * 1024 },
-  { tiff: true, mergeOutput: true, firstChunkSize: 256 * 1024 },
   true,
 ] as const;
 

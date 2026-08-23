@@ -124,20 +124,34 @@ function buildCameraModel(
   exif: Record<string, unknown>,
   imageMeta?: Record<string, unknown> | null,
 ): string | undefined {
-  const make =
-    toStringValue(readExifValue(exif, ["Make"])) ??
-    toStringValue(imageMeta?.Make) ??
-    toStringValue(imageMeta?.make);
-  const model =
+  return (
     toStringValue(readExifValue(exif, ["Model"])) ??
     toStringValue(imageMeta?.Model) ??
-    toStringValue(imageMeta?.model);
+    toStringValue(imageMeta?.model)
+  );
+}
 
-  if (make && model) {
-    return model.startsWith(make) ? model : `${make} ${model}`;
+function extractCopyright(exif: Record<string, unknown>): string | undefined {
+  const direct = toStringValue(
+    readExifValue(exif, [
+      "Copyright",
+      "CopyrightNotice",
+      "Rights",
+      "Credit",
+      "UsageTerms",
+    ]),
+  );
+
+  if (direct) return direct;
+
+  for (const [key, value] of Object.entries(exif)) {
+    if (/copyright|rights|credit/i.test(key)) {
+      const parsed = toStringValue(value);
+      if (parsed) return parsed;
+    }
   }
 
-  return model ?? make;
+  return undefined;
 }
 
 function metadataFromExif(
@@ -175,13 +189,7 @@ function metadataFromExif(
     ),
     lensMaker: toStringValue(readExifValue(exifRecord, ["LensMake", "Make"])),
     lensModel: toStringValue(readExifValue(exifRecord, ["LensModel"])),
-    copyright: toStringValue(
-      readExifValue(exifRecord, [
-        "Copyright",
-        "CopyrightNotice",
-        "Rights",
-      ]),
-    ),
+    copyright: extractCopyright(exifRecord),
   };
 }
 
@@ -297,10 +305,10 @@ export function extractLoggedExifTags(
     "LensModel",
     "Copyright",
     "CopyrightNotice",
-    "Artist",
-    "ImageDescription",
-    "UserComment",
+    "Credit",
     "Rights",
+    "UsageTerms",
+    "Artist",
   ];
 
   const logged: Record<string, unknown> = {};

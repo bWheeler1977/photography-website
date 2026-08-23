@@ -10,6 +10,7 @@ type SanityManualCameraMetadata = {
   focalLength?: string;
   lensMaker?: string;
   lensModel?: string;
+  copyright?: string;
 };
 
 export type SanityAssetMetadata = {
@@ -174,6 +175,13 @@ function metadataFromExif(
     ),
     lensMaker: toStringValue(readExifValue(exifRecord, ["LensMake", "Make"])),
     lensModel: toStringValue(readExifValue(exifRecord, ["LensModel"])),
+    copyright: toStringValue(
+      readExifValue(exifRecord, [
+        "Copyright",
+        "CopyrightNotice",
+        "Rights",
+      ]),
+    ),
   };
 }
 
@@ -189,6 +197,7 @@ function mergeCameraMetadata(
     focalLength: manual?.focalLength ?? fromExif.focalLength,
     lensMaker: manual?.lensMaker ?? fromExif.lensMaker,
     lensModel: manual?.lensModel ?? fromExif.lensModel,
+    copyright: manual?.copyright ?? fromExif.copyright,
   };
 
   return hasCameraMetadata(merged) ? merged : undefined;
@@ -245,6 +254,7 @@ export function buildCameraMetadataPatch(
     "focalLength",
     "lensMaker",
     "lensModel",
+    "copyright",
   ] as const;
 
   for (const field of fields) {
@@ -263,4 +273,43 @@ export function isPngFile(file: Pick<File, "name" | "type">): boolean {
   return (
     file.type === "image/png" || file.name.toLowerCase().endsWith(".png")
   );
+}
+
+export function isJpegFile(file: Pick<File, "name" | "type">): boolean {
+  return (
+    file.type === "image/jpeg" ||
+    /\.jpe?g$/i.test(file.name)
+  );
+}
+
+export function extractLoggedExifTags(
+  exif: Record<string, unknown>,
+): Record<string, unknown> {
+  const keys = [
+    "Make",
+    "Model",
+    "FNumber",
+    "ExposureTime",
+    "ISO",
+    "ISOSpeedRatings",
+    "FocalLength",
+    "LensMake",
+    "LensModel",
+    "Copyright",
+    "CopyrightNotice",
+    "Artist",
+    "ImageDescription",
+    "UserComment",
+    "Rights",
+  ];
+
+  const logged: Record<string, unknown> = {};
+  for (const key of keys) {
+    const value = exif[key];
+    if (value !== undefined && value !== null && value !== "") {
+      logged[key] = value;
+    }
+  }
+
+  return logged;
 }

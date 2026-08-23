@@ -23,6 +23,8 @@ export const photo = defineType({
       name: "image",
       title: "Image",
       type: "image",
+      description:
+        "Upload the original in-camera JPEG when possible so camera and copyright metadata can be read automatically.",
       options: {
         hotspot: true,
         metadata: ["exif", "image"],
@@ -74,7 +76,7 @@ export const photo = defineType({
       title: "Camera metadata",
       type: "object",
       description:
-        "Camera details shown in the site lightbox. Copy from your image file properties on your computer, or leave blank to use auto-detected values when available.",
+        "Upload the original in-camera JPEG to preserve camera and copyright metadata. Auto-detected values fill these fields when EXIF is available.",
       fields: [
         defineField({
           name: "cameraModel",
@@ -114,6 +116,12 @@ export const photo = defineType({
           name: "lensModel",
           title: "Lens model",
           type: "string",
+        }),
+        defineField({
+          name: "copyright",
+          title: "Copyright",
+          type: "string",
+          description: "Example: © 2026 Brian Wheeler Photography",
         }),
       ],
     }),

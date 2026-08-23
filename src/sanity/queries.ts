@@ -119,6 +119,7 @@ export type SanityPhotoDocument = {
     focalLength?: string;
     lensMaker?: string;
     lensModel?: string;
+    copyright?: string;
   };
   assetMetadata?: {
     exif?: Record<string, unknown>;

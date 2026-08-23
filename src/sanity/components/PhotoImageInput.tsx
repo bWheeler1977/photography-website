@@ -6,7 +6,10 @@ import type { ImageValue, ObjectInputProps } from "sanity";
 import { useClient, useFormValue } from "sanity";
 import {
   buildCameraMetadataPatch,
+  extractLoggedExifTags,
   hasCameraMetadata,
+  isJpegFile,
+  isPngFile,
   logCameraMetadataDebug,
   resolveCameraMetadata,
   type SanityAssetMetadata,
@@ -29,8 +32,27 @@ type AssetDetailsResponse = {
 
 type MetadataPatch = Record<string, string>;
 
-const MANUAL_METADATA_HINT =
-  "Auto-detect did not find camera metadata in this file. You can copy values from the image file properties on your computer into the Camera metadata fields below.";
+const PNG_METADATA_HINT =
+  "PNG uploads usually do not retain embedded camera or copyright metadata. Upload the original in-camera JPEG to auto-fill these fields.";
+
+const JPEG_METADATA_HINT =
+  "No camera metadata was detected in this JPEG. Check the browser console for [camera-metadata] logs, or fill in the Camera metadata fields below.";
+
+const ASSET_METADATA_RETRY_MS = [0, 2000, 5000, 10000];
+
+function isJpegAsset(asset: AssetDetailsResponse | null | undefined): boolean {
+  return (
+    asset?.extension === "jpg" ||
+    asset?.extension === "jpeg" ||
+    asset?.mimeType === "image/jpeg"
+  );
+}
+
+function assetHasExtractedMetadata(
+  asset: AssetDetailsResponse | null | undefined,
+): boolean {
+  return Boolean(asset?.metadata?.exif || asset?.metadata?.image);
+}
 
 export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
   const client = useClient({ apiVersion: "2024-01-01" });
@@ -114,21 +136,41 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
+        isJpeg: isJpegFile(file),
+        isPng: isPngFile(file),
       });
 
-      setUploadNotice(null);
+      if (isJpegFile(file)) {
+        logCameraMetadataDebug("studio-jpg-upload", {
+          photoTitle,
+          fileName: file.name,
+          message:
+            "Reading embedded metadata from the selected JPEG before upload.",
+        });
+        setUploadNotice(null);
+      } else if (isPngFile(file)) {
+        setUploadNotice(PNG_METADATA_HINT);
+        logCameraMetadataDebug("studio-png-upload", {
+          photoTitle,
+          fileName: file.name,
+          message: PNG_METADATA_HINT,
+        });
+      } else {
+        setUploadNotice(null);
+      }
 
       const resolved = await parseCameraMetadataFromFile(file, photoTitle);
 
       if (!resolved) {
-        if (!hasManualMetadata) {
-          setUploadNotice(MANUAL_METADATA_HINT);
+        if (!hasManualMetadata && isJpegFile(file)) {
+          setUploadNotice(JPEG_METADATA_HINT);
         }
 
         logCameraMetadataDebug("studio-file-no-metadata", {
           photoTitle,
           fileName: file.name,
-          message: MANUAL_METADATA_HINT,
+          isJpeg: isJpegFile(file),
+          isPng: isPngFile(file),
         });
         return;
       }
@@ -183,14 +225,8 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
 
     let cancelled = false;
 
-    async function inspectUploadedAsset() {
-      logCameraMetadataDebug("studio-upload-start", {
-        photoTitle,
-        documentId,
-        assetRef,
-      });
-
-      const asset = await client.fetch<AssetDetailsResponse | null>(
+    async function fetchAssetDetails() {
+      return client.fetch<AssetDetailsResponse | null>(
         `*[_id == $id][0]{
           extension,
           mimeType,
@@ -203,19 +239,55 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         }`,
         { id: assetRef },
       );
+    }
 
-      if (cancelled) return;
-
-      logCameraMetadataDebug("studio-upload-asset", {
+    async function inspectUploadedAsset() {
+      logCameraMetadataDebug("studio-upload-start", {
         photoTitle,
+        documentId,
         assetRef,
-        extension: asset?.extension,
-        mimeType: asset?.mimeType,
-        originalFilename: asset?.originalFilename,
-        metadata: asset?.metadata,
       });
 
-      const resolved = resolveCameraMetadata(asset?.metadata, cameraMetadata, {
+      let asset: AssetDetailsResponse | null = null;
+
+      for (const [index, delayMs] of ASSET_METADATA_RETRY_MS.entries()) {
+        if (cancelled) return;
+
+        if (delayMs > 0) {
+          logCameraMetadataDebug("studio-upload-retry-wait", {
+            photoTitle,
+            assetRef,
+            attempt: index + 1,
+            delayMs,
+          });
+          await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+        }
+
+        if (cancelled) return;
+
+        asset = await fetchAssetDetails();
+
+        logCameraMetadataDebug("studio-upload-asset", {
+          photoTitle,
+          assetRef,
+          attempt: index + 1,
+          extension: asset?.extension,
+          mimeType: asset?.mimeType,
+          originalFilename: asset?.originalFilename,
+          metadata: asset?.metadata,
+          knownTags: asset?.metadata?.exif
+            ? extractLoggedExifTags(asset.metadata.exif)
+            : null,
+        });
+
+        if (assetHasExtractedMetadata(asset) || !isJpegAsset(asset)) {
+          break;
+        }
+      }
+
+      if (cancelled || !asset) return;
+
+      const resolved = resolveCameraMetadata(asset.metadata, cameraMetadata, {
         debugLabel: photoTitle,
         log: true,
       });
@@ -224,14 +296,17 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
         logCameraMetadataDebug("studio-upload-empty", {
           photoTitle,
           assetRef,
-          reason:
-            "Sanity did not store camera metadata on this asset. Use the Camera metadata fields below if auto-detect did not fill them.",
-          extension: asset?.extension,
-          mimeType: asset?.mimeType,
+          reason: isJpegAsset(asset)
+            ? "Sanity did not return EXIF/image metadata for this JPEG asset yet. Local file parsing may still have filled the fields above."
+            : "Sanity did not store camera metadata on this asset.",
+          extension: asset.extension,
+          mimeType: asset.mimeType,
         });
 
         if (!hasManualMetadata) {
-          setUploadNotice(MANUAL_METADATA_HINT);
+          setUploadNotice(
+            isJpegAsset(asset) ? JPEG_METADATA_HINT : PNG_METADATA_HINT,
+          );
         }
 
         lastProcessedKey.current = processKey;
@@ -286,7 +361,7 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
   return (
     <Stack space={3}>
       {uploadNotice && (
-        <Card padding={3} radius={2} shadow={1} tone="primary">
+        <Card padding={3} radius={2} shadow={1} tone="caution">
           <Text size={1}>{uploadNotice}</Text>
         </Card>
       )}

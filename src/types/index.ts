@@ -6,6 +6,7 @@ export type PhotoCameraMetadata = {
   focalLength?: string;
   lensMaker?: string;
   lensModel?: string;
+  copyright?: string;
 };
 
 export type Photo = {

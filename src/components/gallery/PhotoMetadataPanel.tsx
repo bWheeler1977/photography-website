@@ -45,6 +45,10 @@ function buildMetadataRows(metadata: PhotoCameraMetadata): MetadataRow[] {
     rows.push({ label: "Lens model", value: metadata.lensModel });
   }
 
+  if (metadata.copyright) {
+    rows.push({ label: "Copyright", value: metadata.copyright });
+  }
+
   return rows;
 }
 

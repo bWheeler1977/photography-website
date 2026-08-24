@@ -78,7 +78,7 @@ export function PhotoMetadataPanel({
               type="button"
               onClick={onClose}
               className="rounded-full border border-white/20 p-1.5 text-white/80 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
-              aria-label="Close camera details"
+              aria-label="Hide camera details"
             >
               <svg
                 aria-hidden="true"
@@ -88,7 +88,11 @@ export function PhotoMetadataPanel({
                 stroke="currentColor"
                 strokeWidth="1.75"
               >
-                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+                <path
+                  d="M6 9l6 6 6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>

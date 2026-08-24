@@ -7,6 +7,8 @@ export const PHOTO_CATEGORIES: Record<PhotoCategory, string> = {
   city: "City",
   portrait: "Portrait",
   nature: "Nature",
+  space: "Space",
+  "rural-rustic": "Rural/Rustic",
 };
 
 export const PHOTO_CATEGORY_ORDER: PhotoCategory[] = [
@@ -16,6 +18,8 @@ export const PHOTO_CATEGORY_ORDER: PhotoCategory[] = [
   "city",
   "portrait",
   "nature",
+  "space",
+  "rural-rustic",
 ];
 
 export function isPhotoCategory(value: string): value is PhotoCategory {

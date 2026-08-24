@@ -27,7 +27,9 @@ export type PhotoCategory =
   | "wildlife"
   | "city"
   | "portrait"
-  | "nature";
+  | "nature"
+  | "space"
+  | "rural-rustic";
 
 export type PrintProduct = {
   id: string;

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { CategoryGrid } from "@/components/gallery/CategoryGrid";
+import {
+  getCategoryLabel,
+  PHOTO_CATEGORY_ORDER,
+} from "@/lib/categories";
 import { getGalleryCategories } from "@/lib/photos";
 
 export const metadata: Metadata = {
@@ -9,6 +13,9 @@ export const metadata: Metadata = {
 
 export default async function GalleryPage() {
   const categories = await getGalleryCategories();
+  const categoryLabels = PHOTO_CATEGORY_ORDER.map((category) =>
+    getCategoryLabel(category).toLowerCase(),
+  ).join(", ");
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">
@@ -18,8 +25,7 @@ export default async function GalleryPage() {
           Gallery
         </h1>
         <p className="mt-4 text-lg text-muted">
-          Choose a collection to explore landscape, birds, wildlife, city,
-          portrait, and nature photography.
+          Choose a collection to explore {categoryLabels} photography.
         </p>
       </header>
       <CategoryGrid categories={categories} />

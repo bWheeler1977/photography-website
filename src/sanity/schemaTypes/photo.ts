@@ -54,6 +54,8 @@ export const photo = defineType({
           { title: "City", value: "city" },
           { title: "Portrait", value: "portrait" },
           { title: "Nature", value: "nature" },
+          { title: "Space", value: "space" },
+          { title: "Rural/Rustic", value: "rural-rustic" },
         ],
         layout: "radio",
       },

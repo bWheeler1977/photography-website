@@ -108,7 +108,7 @@ export type SanityPhotoDocument = {
   title: string;
   alt: string;
   image: SanityImageSource;
-  category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature";
+  category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature" | "space" | "rural-rustic";
   featured?: boolean;
   instagramId?: string;
   cameraMetadata?: {

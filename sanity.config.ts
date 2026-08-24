@@ -3,6 +3,7 @@
 import { visionTool } from "@sanity/vision";
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
+import { featuredPhotoBadge } from "./src/sanity/badges/featuredPhotoBadge";
 import { schemaTypes } from "./src/sanity/schemaTypes";
 import { structure } from "./src/sanity/structure";
 
@@ -18,5 +19,9 @@ export default defineConfig({
   plugins: [structureTool({ structure }), visionTool()],
   schema: {
     types: schemaTypes,
+  },
+  document: {
+    badges: (prev, context) =>
+      context.schemaType === "photo" ? [featuredPhotoBadge, ...prev] : prev,
   },
 });

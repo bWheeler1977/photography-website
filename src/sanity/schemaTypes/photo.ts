@@ -1,7 +1,7 @@
 import { createElement } from "react";
-import { defineField, defineType, type PreviewValue } from "sanity";
+import { defineField, defineType } from "sanity";
 import { PhotoImageInput } from "@/sanity/components/PhotoImageInput";
-import { PhotoPreviewTitle } from "@/sanity/components/PhotoPreviewTitle";
+import { PhotoPreviewMedia } from "@/sanity/components/PhotoPreviewMedia";
 import { getCategoryLabel, isPhotoCategory } from "@/lib/categories";
 
 export const photo = defineType({
@@ -150,10 +150,13 @@ export const photo = defineType({
         : subtitle;
 
       return {
-        title: createElement(PhotoPreviewTitle, { title, featured }),
+        title,
         subtitle: categoryLabel,
-        media,
-      } as unknown as PreviewValue;
+        media:
+          featured && media
+            ? createElement(PhotoPreviewMedia, { image: media, featured: true })
+            : media,
+      };
     },
   },
 });

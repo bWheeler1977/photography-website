@@ -26,7 +26,7 @@ export const galleryCategory = defineType({
       title: "Show on website",
       type: "boolean",
       description:
-        "When off, this category is hidden on the gallery page and its photos (including homepage featured) are not shown publicly.",
+        "When off, this category is hidden on the gallery page and its photos (including homepage featured) are not shown publicly. Publish this category after changing the toggle.",
       initialValue: true,
     }),
     defineField({

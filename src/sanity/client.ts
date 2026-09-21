@@ -82,3 +82,21 @@ export async function fetchSanityFresh<T>(
 
   return client.fetch<T>(query, params, { cache: "no-store" });
 }
+
+/** Published content only — bypasses Sanity CDN and Next.js data cache (gallery visibility, etc.). */
+export async function fetchSanityPublished<T>(
+  query: string,
+  params: QueryParams = {},
+): Promise<T> {
+  const client = createClient({
+    projectId,
+    dataset,
+    apiVersion,
+    useCdn: false,
+  });
+
+  return client.fetch<T>(query, params, {
+    cache: "no-store",
+    perspective: "published",
+  });
+}

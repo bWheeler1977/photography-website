@@ -4,7 +4,7 @@ import {
 } from "@/lib/categories";
 import { getGalleryCategoryDefinitions } from "@/lib/galleryCategories";
 import { resolveCameraMetadata } from "@/lib/cameraMetadata";
-import { fetchSanity } from "@/sanity/client";
+import { fetchSanity, fetchSanityPublished } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import { urlFor } from "@/sanity/image";
 import {
@@ -117,7 +117,8 @@ export async function getAllPhotos(): Promise<Photo[]> {
   }
 
   try {
-    const photos = await fetchSanity<SanityPhotoDocument[]>(allPhotosQuery);
+    const photos =
+      await fetchSanityPublished<SanityPhotoDocument[]>(allPhotosQuery);
 
     if (!photos.length) {
       return PLACEHOLDER_PHOTOS;
@@ -136,7 +137,7 @@ export async function getFeaturedPhotos(): Promise<Photo[]> {
 
   try {
     const photos =
-      await fetchSanity<SanityPhotoDocument[]>(featuredPhotosQuery);
+      await fetchSanityPublished<SanityPhotoDocument[]>(featuredPhotosQuery);
 
     if (!photos.length) {
       return PLACEHOLDER_PHOTOS.filter((photo) => photo.featured);
@@ -178,14 +179,14 @@ async function fetchPhotosByCategoryFromSanity(
   category: string,
 ): Promise<Photo[]> {
   try {
-    const photos = await fetchSanity<SanityPhotoDocument[]>(
+    const photos = await fetchSanityPublished<SanityPhotoDocument[]>(
       photosByCategoryQuery,
       { category },
     );
 
     return photos.map(mapPhoto);
   } catch {
-    return PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
+    return [];
   }
 }
 
@@ -194,8 +195,5 @@ export async function getCategoryPhotos(category: string): Promise<Photo[]> {
     return PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
   }
 
-  const photos = await fetchPhotosByCategoryFromSanity(category);
-  return photos.length
-    ? photos
-    : PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
+  return fetchPhotosByCategoryFromSanity(category);
 }

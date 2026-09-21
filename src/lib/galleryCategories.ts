@@ -1,4 +1,4 @@
-import { fetchSanity, fetchSanityFresh } from "@/sanity/client";
+import { fetchSanityFresh, fetchSanityPublished } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import {
   DEFAULT_GALLERY_CATEGORIES,
@@ -7,6 +7,7 @@ import {
 import {
   allGalleryCategoriesQuery,
   galleryCategoryUnlockQuery,
+  publicGalleryCategoriesQuery,
 } from "@/sanity/queries";
 
 export type GalleryCategoryDefinition = {
@@ -64,7 +65,11 @@ export async function getGalleryCategoryDefinitions(
   }
 
   try {
-    const categories = await fetchSanity<
+    const query = includeHidden
+      ? allGalleryCategoriesQuery
+      : publicGalleryCategoriesQuery;
+
+    const categories = await fetchSanityPublished<
       Array<{
         title: string;
         slug: string;
@@ -73,7 +78,7 @@ export async function getGalleryCategoryDefinitions(
         allowDownload?: boolean;
         sortOrder?: number;
       }>
-    >(allGalleryCategoriesQuery);
+    >(query);
 
     if (!categories.length) {
       return getDefaultGalleryCategoryDefinitions();
@@ -82,7 +87,7 @@ export async function getGalleryCategoryDefinitions(
     return categories
       .filter((category) => Boolean(category.slug))
       .map(mapGalleryCategoryDefinition)
-      .filter((category) => includeHidden || category.showOnSite);
+      .filter((category) => includeHidden || category.showOnSite !== false);
   } catch {
     return getDefaultGalleryCategoryDefinitions();
   }

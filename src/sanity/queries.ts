@@ -66,14 +66,27 @@ export const photoByIdQuery = groq`
   }
 `;
 
+const galleryCategoryFields = groq`
+  title,
+  "slug": slug.current,
+  showOnSite,
+  passwordProtected,
+  allowDownload,
+  sortOrder
+`;
+
 export const allGalleryCategoriesQuery = groq`
   *[_type == "galleryCategory"] | order(coalesce(sortOrder, 999) asc, title asc) {
-    title,
-    "slug": slug.current,
-    showOnSite,
-    passwordProtected,
-    allowDownload,
-    sortOrder
+    ${galleryCategoryFields}
+  }
+`;
+
+export const publicGalleryCategoriesQuery = groq`
+  *[
+    _type == "galleryCategory"
+    && coalesce(showOnSite, true) == true
+  ] | order(coalesce(sortOrder, 999) asc, title asc) {
+    ${galleryCategoryFields}
   }
 `;
 

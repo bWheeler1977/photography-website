@@ -15,21 +15,11 @@ export type Photo = {
   alt: string;
   src: string;
   fullSrc: string;
-  category: PhotoCategory;
+  category: string;
   featured?: boolean;
   instagramId?: string;
   cameraMetadata?: PhotoCameraMetadata;
 };
-
-export type PhotoCategory =
-  | "landscape"
-  | "birds"
-  | "wildlife"
-  | "city"
-  | "portrait"
-  | "nature"
-  | "space"
-  | "rural-rustic";
 
 export type PrintProduct = {
   id: string;

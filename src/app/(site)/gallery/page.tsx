@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import { CategoryGrid } from "@/components/gallery/CategoryGrid";
-import {
-  getCategoryLabel,
-  PHOTO_CATEGORY_ORDER,
-} from "@/lib/categories";
 import { getGalleryCategories } from "@/lib/photos";
 
 export const metadata: Metadata = {
@@ -13,9 +9,9 @@ export const metadata: Metadata = {
 
 export default async function GalleryPage() {
   const categories = await getGalleryCategories();
-  const categoryLabels = PHOTO_CATEGORY_ORDER.map((category) =>
-    getCategoryLabel(category).toLowerCase(),
-  ).join(", ");
+  const categoryLabels = categories
+    .map((category) => category.label.toLowerCase())
+    .join(", ");
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">

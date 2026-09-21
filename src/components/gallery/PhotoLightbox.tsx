@@ -8,6 +8,7 @@ import {
   hasCameraMetadata,
   logCameraMetadataDebug,
 } from "@/lib/cameraMetadata";
+import { formatCategorySlug } from "@/lib/galleryCategories";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import type { Photo } from "@/types";
@@ -293,7 +294,7 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
               transition={{ duration: 0.25 }}
             >
               <p className="text-xs uppercase tracking-[0.2em] text-white/60">
-                {displayedPhoto.category}
+                {formatCategorySlug(displayedPhoto.category)}
               </p>
               <h2 className="mt-2 text-xl font-medium text-white sm:text-2xl">
                 {displayedPhoto.title}

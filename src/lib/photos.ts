@@ -1,8 +1,8 @@
-import type { PhotoCategory } from "@/types";
 import {
   buildGalleryCategories,
   type GalleryCategory,
 } from "@/lib/categories";
+import { getGalleryCategoryDefinitions } from "@/lib/galleryCategories";
 import { resolveCameraMetadata } from "@/lib/cameraMetadata";
 import { fetchSanity } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
@@ -165,12 +165,16 @@ export async function getPhotoById(id: string): Promise<Photo | undefined> {
 }
 
 export async function getGalleryCategories(): Promise<GalleryCategory[]> {
-  const photos = await getAllPhotos();
-  return buildGalleryCategories(photos);
+  const [photos, definitions] = await Promise.all([
+    getAllPhotos(),
+    getGalleryCategoryDefinitions(),
+  ]);
+
+  return buildGalleryCategories(definitions, photos);
 }
 
 async function fetchPhotosByCategoryFromSanity(
-  category: PhotoCategory,
+  category: string,
 ): Promise<Photo[]> {
   try {
     const photos = await fetchSanity<SanityPhotoDocument[]>(
@@ -184,9 +188,7 @@ async function fetchPhotosByCategoryFromSanity(
   }
 }
 
-export async function getCategoryPhotos(
-  category: PhotoCategory,
-): Promise<Photo[]> {
+export async function getCategoryPhotos(category: string): Promise<Photo[]> {
   if (!isSanityConfigured) {
     return PLACEHOLDER_PHOTOS.filter((photo) => photo.category === category);
   }

@@ -1,8 +1,9 @@
 import { createElement } from "react";
 import { defineField, defineType } from "sanity";
+import { CategorySlugInput } from "@/sanity/components/CategorySlugInput";
 import { PhotoImageInput } from "@/sanity/components/PhotoImageInput";
 import { PhotoPreviewMedia } from "@/sanity/components/PhotoPreviewMedia";
-import { getCategoryLabel, isPhotoCategory } from "@/lib/categories";
+import { formatCategorySlug } from "@/lib/galleryCategories";
 
 export const photo = defineType({
   name: "photo",
@@ -49,18 +50,10 @@ export const photo = defineType({
       name: "category",
       title: "Category",
       type: "string",
-      options: {
-        list: [
-          { title: "Landscape", value: "landscape" },
-          { title: "Birds", value: "birds" },
-          { title: "Wildlife", value: "wildlife" },
-          { title: "City", value: "city" },
-          { title: "Portrait", value: "portrait" },
-          { title: "Nature", value: "nature" },
-          { title: "Space", value: "space" },
-          { title: "Rural/Rustic", value: "rural-rustic" },
-        ],
-        layout: "radio",
+      description:
+        "Choose a gallery category. Create new categories under Gallery Categories in the Studio sidebar.",
+      components: {
+        input: CategorySlugInput,
       },
       validation: (rule) => rule.required().error("Category is required"),
     }),
@@ -145,13 +138,9 @@ export const photo = defineType({
       featured: "featured",
     },
     prepare({ title, subtitle, media, featured }) {
-      const categoryLabel = isPhotoCategory(subtitle)
-        ? getCategoryLabel(subtitle)
-        : subtitle;
-
       return {
         title,
-        subtitle: categoryLabel,
+        subtitle: subtitle ? formatCategorySlug(String(subtitle)) : undefined,
         media:
           featured && media
             ? createElement(PhotoPreviewMedia, { image: media, featured: true })

@@ -8,6 +8,7 @@ import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
 import { useVisiblePhotoCount } from "@/components/home/useVisiblePhotoCount";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { formatCategorySlug } from "@/lib/galleryCategories";
 import type { Photo } from "@/types";
 
 const AUTO_ADVANCE_MS = 5000;
@@ -49,7 +50,7 @@ function FeaturedPhotoCard({ photo, photoIndex, onOpen }: FeaturedPhotoCardProps
         </div>
         <div className="p-5">
           <p className="text-xs uppercase tracking-[0.15em] text-muted">
-            {photo.category}
+            {formatCategorySlug(photo.category)}
           </p>
           <h3 className="mt-2 text-lg font-medium">{photo.title}</h3>
         </div>

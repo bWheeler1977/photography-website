@@ -17,7 +17,15 @@ export const structure: StructureResolver = (S) =>
         .id("aboutPage")
         .child(S.document().schemaType("aboutPage").documentId("aboutPage")),
       S.divider(),
+      S.listItem()
+        .title("Gallery Categories")
+        .schemaType("galleryCategory")
+        .child(
+          S.documentTypeList("galleryCategory").title("Gallery Categories"),
+        ),
       ...S.documentTypeListItems().filter(
-        (item) => !singletonTypes.has(item.getId() ?? ""),
+        (item) =>
+          !singletonTypes.has(item.getId() ?? "") &&
+          item.getId() !== "galleryCategory",
       ),
     ]);

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
+import { formatCategorySlug } from "@/lib/galleryCategories";
 import type { Photo } from "@/types";
 
 type GalleryGridProps = {
@@ -45,7 +46,7 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
               </div>
               <figcaption className="p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-muted">
-                  {photo.category}
+                  {formatCategorySlug(photo.category)}
                 </p>
                 <p className="mt-1 font-medium">{photo.title}</p>
               </figcaption>

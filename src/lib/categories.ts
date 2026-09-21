@@ -1,53 +1,28 @@
-import type { Photo, PhotoCategory } from "@/types";
-
-export const PHOTO_CATEGORIES: Record<PhotoCategory, string> = {
-  landscape: "Landscape",
-  birds: "Birds",
-  wildlife: "Wildlife",
-  city: "City",
-  portrait: "Portrait",
-  nature: "Nature",
-  space: "Space",
-  "rural-rustic": "Rural/Rustic",
-};
-
-export const PHOTO_CATEGORY_ORDER: PhotoCategory[] = [
-  "landscape",
-  "birds",
-  "wildlife",
-  "city",
-  "portrait",
-  "nature",
-  "space",
-  "rural-rustic",
-];
-
-export function isPhotoCategory(value: string): value is PhotoCategory {
-  return value in PHOTO_CATEGORIES;
-}
-
-export function getCategoryLabel(category: PhotoCategory): string {
-  return PHOTO_CATEGORIES[category];
-}
+import type { GalleryCategoryDefinition } from "@/lib/galleryCategories";
+import type { Photo } from "@/types";
 
 export type GalleryCategory = {
-  category: PhotoCategory;
+  slug: string;
   label: string;
+  passwordProtected: boolean;
   coverPhoto: Photo;
   photoCount: number;
 };
 
-export function buildGalleryCategories(photos: Photo[]): GalleryCategory[] {
-  const photosByCategory = new Map<PhotoCategory, Photo[]>();
+export function buildGalleryCategories(
+  categoryDefinitions: GalleryCategoryDefinition[],
+  photos: Photo[],
+): GalleryCategory[] {
+  const photosBySlug = new Map<string, Photo[]>();
 
   for (const photo of photos) {
-    const categoryPhotos = photosByCategory.get(photo.category) ?? [];
+    const categoryPhotos = photosBySlug.get(photo.category) ?? [];
     categoryPhotos.push(photo);
-    photosByCategory.set(photo.category, categoryPhotos);
+    photosBySlug.set(photo.category, categoryPhotos);
   }
 
-  return PHOTO_CATEGORY_ORDER.flatMap((category) => {
-    const categoryPhotos = photosByCategory.get(category);
+  return categoryDefinitions.flatMap((definition) => {
+    const categoryPhotos = photosBySlug.get(definition.slug);
 
     if (!categoryPhotos?.length) {
       return [];
@@ -55,8 +30,9 @@ export function buildGalleryCategories(photos: Photo[]): GalleryCategory[] {
 
     return [
       {
-        category,
-        label: getCategoryLabel(category),
+        slug: definition.slug,
+        label: definition.title,
+        passwordProtected: definition.passwordProtected,
         coverPhoto: categoryPhotos[0],
         photoCount: categoryPhotos.length,
       },

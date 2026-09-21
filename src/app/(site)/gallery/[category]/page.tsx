@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
-import { getCategoryLabel, isPhotoCategory } from "@/lib/categories";
+import { hasGalleryAccess } from "@/lib/galleryAccess";
+import {
+  getCategoryLabel,
+  getGalleryCategoryBySlug,
+} from "@/lib/galleryCategories";
 import { getCategoryPhotos, getGalleryCategories } from "@/lib/photos";
 
 type CategoryGalleryPageProps = {
@@ -12,8 +16,8 @@ type CategoryGalleryPageProps = {
 export async function generateStaticParams() {
   const categories = await getGalleryCategories();
 
-  return categories.map(({ category }) => ({
-    category,
+  return categories.map(({ slug }) => ({
+    category: slug,
   }));
 }
 
@@ -21,14 +25,11 @@ export async function generateMetadata({
   params,
 }: CategoryGalleryPageProps): Promise<Metadata> {
   const { category } = await params;
-
-  if (!isPhotoCategory(category)) {
-    return { title: "Gallery" };
-  }
+  const label = await getCategoryLabel(category);
 
   return {
-    title: getCategoryLabel(category),
-    description: `Browse ${getCategoryLabel(category).toLowerCase()} photography.`,
+    title: label,
+    description: `Browse ${label.toLowerCase()} photography.`,
   };
 }
 
@@ -36,18 +37,22 @@ export default async function CategoryGalleryPage({
   params,
 }: CategoryGalleryPageProps) {
   const { category } = await params;
-
-  if (!isPhotoCategory(category)) {
-    notFound();
-  }
-
+  const categoryMeta = await getGalleryCategoryBySlug(category);
   const photos = await getCategoryPhotos(category);
 
   if (!photos.length) {
     notFound();
   }
 
-  const label = getCategoryLabel(category);
+  if (categoryMeta?.passwordProtected) {
+    const allowed = await hasGalleryAccess(category);
+
+    if (!allowed) {
+      redirect("/gallery");
+    }
+  }
+
+  const label = categoryMeta?.title ?? (await getCategoryLabel(category));
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-16">

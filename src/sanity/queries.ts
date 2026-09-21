@@ -52,6 +52,22 @@ export const photoByIdQuery = groq`
   }
 `;
 
+export const allGalleryCategoriesQuery = groq`
+  *[_type == "galleryCategory"] | order(coalesce(sortOrder, 999) asc, title asc) {
+    title,
+    "slug": slug.current,
+    passwordProtected,
+    sortOrder
+  }
+`;
+
+export const galleryCategoryUnlockQuery = groq`
+  *[_type == "galleryCategory" && slug.current == $slug][0] {
+    passwordProtected,
+    password
+  }
+`;
+
 export const photosByCategoryQuery = groq`
   *[_type == "photo" && category == $category] | order(coalesce(order, 999) asc, _createdAt desc) {
     _id,
@@ -108,7 +124,7 @@ export type SanityPhotoDocument = {
   title: string;
   alt: string;
   image: SanityImageSource;
-  category: "landscape" | "birds" | "wildlife" | "city" | "portrait" | "nature" | "space" | "rural-rustic";
+  category: string;
   featured?: boolean;
   instagramId?: string;
   cameraMetadata?: {

@@ -38,3 +38,32 @@ export async function fetchSanity<T>(
     next: { revalidate: sanityRevalidateSeconds },
   });
 }
+
+export function getSanityServerClient(): SanityClient {
+  if (!isSanityConfigured) {
+    throw new Error("Sanity is not configured");
+  }
+
+  const token = process.env.SANITY_API_READ_TOKEN;
+
+  if (!token) {
+    throw new Error("SANITY_API_READ_TOKEN is not configured");
+  }
+
+  return createClient({
+    projectId,
+    dataset,
+    apiVersion,
+    useCdn: false,
+    token,
+  });
+}
+
+export async function fetchSanityWithToken<T>(
+  query: string,
+  params: QueryParams = {},
+): Promise<T> {
+  return getSanityServerClient().fetch<T>(query, params, {
+    cache: "no-store",
+  });
+}

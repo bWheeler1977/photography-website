@@ -12,9 +12,14 @@ import {
 export type GalleryCategoryDefinition = {
   slug: string;
   title: string;
+  showOnSite: boolean;
   passwordProtected: boolean;
   allowDownload: boolean;
   sortOrder: number;
+};
+
+type GalleryCategoryQueryOptions = {
+  includeHidden?: boolean;
 };
 
 export function formatCategorySlug(slug: string): string {
@@ -25,15 +30,35 @@ function getDefaultGalleryCategoryDefinitions(): GalleryCategoryDefinition[] {
   return DEFAULT_GALLERY_CATEGORIES.map((category) => ({
     slug: category.slug,
     title: category.title,
+    showOnSite: true,
     passwordProtected: false,
     allowDownload: false,
     sortOrder: category.sortOrder,
   }));
 }
 
-export async function getGalleryCategoryDefinitions(): Promise<
-  GalleryCategoryDefinition[]
-> {
+function mapGalleryCategoryDefinition(category: {
+  title: string;
+  slug: string;
+  showOnSite?: boolean;
+  passwordProtected?: boolean;
+  allowDownload?: boolean;
+  sortOrder?: number;
+}): GalleryCategoryDefinition {
+  return {
+    slug: category.slug,
+    title: category.title,
+    showOnSite: category.showOnSite !== false,
+    passwordProtected: Boolean(category.passwordProtected),
+    allowDownload: Boolean(category.allowDownload),
+    sortOrder: category.sortOrder ?? 999,
+  };
+}
+
+export async function getGalleryCategoryDefinitions(
+  options: GalleryCategoryQueryOptions = {},
+): Promise<GalleryCategoryDefinition[]> {
+  const { includeHidden = false } = options;
   if (!isSanityConfigured) {
     return getDefaultGalleryCategoryDefinitions();
   }
@@ -43,6 +68,7 @@ export async function getGalleryCategoryDefinitions(): Promise<
       Array<{
         title: string;
         slug: string;
+        showOnSite?: boolean;
         passwordProtected?: boolean;
         allowDownload?: boolean;
         sortOrder?: number;
@@ -55,13 +81,8 @@ export async function getGalleryCategoryDefinitions(): Promise<
 
     return categories
       .filter((category) => Boolean(category.slug))
-      .map((category) => ({
-        slug: category.slug,
-        title: category.title,
-        passwordProtected: Boolean(category.passwordProtected),
-        allowDownload: Boolean(category.allowDownload),
-        sortOrder: category.sortOrder ?? 999,
-      }));
+      .map(mapGalleryCategoryDefinition)
+      .filter((category) => includeHidden || category.showOnSite);
   } catch {
     return getDefaultGalleryCategoryDefinitions();
   }
@@ -69,8 +90,9 @@ export async function getGalleryCategoryDefinitions(): Promise<
 
 export async function getGalleryCategoryBySlug(
   slug: string,
+  options: GalleryCategoryQueryOptions = {},
 ): Promise<GalleryCategoryDefinition | undefined> {
-  const categories = await getGalleryCategoryDefinitions();
+  const categories = await getGalleryCategoryDefinitions(options);
   return categories.find((category) => category.slug === slug);
 }
 
@@ -87,10 +109,11 @@ export async function getGalleryCategoryForUnlock(slug: string): Promise<
 
   try {
     return await fetchSanityFresh<{
+      showOnSite?: boolean;
       passwordProtected?: boolean;
       password?: string;
     } | null>(galleryCategoryUnlockQuery, { slug }).then((result) =>
-      result
+      result && result.showOnSite !== false
         ? {
             passwordProtected: Boolean(result.passwordProtected),
             password: result.password,

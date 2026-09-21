@@ -1,8 +1,15 @@
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { groq } from "next-sanity";
 
+const visibleGalleryCategorySlugsFilter = groq`
+  *[_type == "galleryCategory" && coalesce(showOnSite, true) == true].slug.current
+`;
+
 export const allPhotosQuery = groq`
-  *[_type == "photo"] | order(coalesce(order, 999) asc, _createdAt desc) {
+  *[
+    _type == "photo"
+    && category in ${visibleGalleryCategorySlugsFilter}
+  ] | order(coalesce(order, 999) asc, _createdAt desc) {
     _id,
     title,
     "alt": image.alt,
@@ -20,7 +27,11 @@ export const allPhotosQuery = groq`
 `;
 
 export const featuredPhotosQuery = groq`
-  *[_type == "photo" && featured == true] | order(coalesce(order, 999) asc, _createdAt desc) {
+  *[
+    _type == "photo"
+    && featured == true
+    && category in ${visibleGalleryCategorySlugsFilter}
+  ] | order(coalesce(order, 999) asc, _createdAt desc) {
     _id,
     title,
     "alt": image.alt,
@@ -59,6 +70,7 @@ export const allGalleryCategoriesQuery = groq`
   *[_type == "galleryCategory"] | order(coalesce(sortOrder, 999) asc, title asc) {
     title,
     "slug": slug.current,
+    showOnSite,
     passwordProtected,
     allowDownload,
     sortOrder
@@ -67,13 +79,18 @@ export const allGalleryCategoriesQuery = groq`
 
 export const galleryCategoryUnlockQuery = groq`
   *[_type == "galleryCategory" && slug.current == $slug][0] {
+    showOnSite,
     passwordProtected,
     password
   }
 `;
 
 export const photosByCategoryQuery = groq`
-  *[_type == "photo" && category == $category] | order(coalesce(order, 999) asc, _createdAt desc) {
+  *[
+    _type == "photo"
+    && category == $category
+    && category in ${visibleGalleryCategorySlugsFilter}
+  ] | order(coalesce(order, 999) asc, _createdAt desc) {
     _id,
     title,
     "alt": image.alt,

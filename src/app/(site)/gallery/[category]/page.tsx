@@ -25,7 +25,15 @@ export async function generateMetadata({
   params,
 }: CategoryGalleryPageProps): Promise<Metadata> {
   const { category } = await params;
-  const label = await getCategoryLabel(category);
+  const categoryMeta = await getGalleryCategoryBySlug(category, {
+    includeHidden: true,
+  });
+
+  if (categoryMeta && !categoryMeta.showOnSite) {
+    return { title: "Not found" };
+  }
+
+  const label = categoryMeta?.title ?? (await getCategoryLabel(category));
 
   return {
     title: label,
@@ -37,7 +45,14 @@ export default async function CategoryGalleryPage({
   params,
 }: CategoryGalleryPageProps) {
   const { category } = await params;
-  const categoryMeta = await getGalleryCategoryBySlug(category);
+  const categoryMeta = await getGalleryCategoryBySlug(category, {
+    includeHidden: true,
+  });
+
+  if (categoryMeta && !categoryMeta.showOnSite) {
+    notFound();
+  }
+
   const photos = await getCategoryPhotos(category);
 
   if (!photos.length) {

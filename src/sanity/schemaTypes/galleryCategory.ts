@@ -22,6 +22,14 @@ export const galleryCategory = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "showOnSite",
+      title: "Show on website",
+      type: "boolean",
+      description:
+        "When off, this category is hidden on the gallery page and its photos (including homepage featured) are not shown publicly.",
+      initialValue: true,
+    }),
+    defineField({
       name: "passwordProtected",
       title: "Password protected",
       type: "boolean",
@@ -65,12 +73,18 @@ export const galleryCategory = defineType({
       title: "title",
       subtitle: "slug.current",
       passwordProtected: "passwordProtected",
+      showOnSite: "showOnSite",
     },
-    prepare({ title, subtitle, passwordProtected }) {
+    prepare({ title, subtitle, passwordProtected, showOnSite }) {
+      const flags = [
+        showOnSite === false ? "Hidden on site" : null,
+        passwordProtected ? "Password protected" : null,
+      ].filter(Boolean);
+
       return {
         title,
-        subtitle: passwordProtected
-          ? `${subtitle ?? ""} · Password protected`
+        subtitle: flags.length
+          ? `${subtitle ?? ""} · ${flags.join(" · ")}`
           : subtitle,
       };
     },

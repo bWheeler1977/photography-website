@@ -22,6 +22,7 @@ async function seedGalleryCategories() {
       _type: "galleryCategory",
       title: category.title,
       slug: { _type: "slug", current: category.slug },
+      showOnSite: true,
       passwordProtected: false,
       sortOrder: category.sortOrder,
     });

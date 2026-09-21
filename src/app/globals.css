@@ -47,6 +47,7 @@ body {
 
 .gallery-flip-scene {
   perspective: 1200px;
+  min-height: 28rem;
 }
 
 .gallery-flip-inner {

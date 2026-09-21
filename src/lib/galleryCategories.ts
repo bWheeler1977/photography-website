@@ -1,4 +1,4 @@
-import { fetchSanity, fetchSanityWithToken } from "@/sanity/client";
+import { fetchSanity, fetchSanityFresh } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import {
   DEFAULT_GALLERY_CATEGORIES,
@@ -82,7 +82,7 @@ export async function getGalleryCategoryForUnlock(slug: string): Promise<
   }
 
   try {
-    return await fetchSanityWithToken<{
+    return await fetchSanityFresh<{
       passwordProtected?: boolean;
       password?: string;
     } | null>(galleryCategoryUnlockQuery, { slug }).then((result) =>

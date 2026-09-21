@@ -45,10 +45,23 @@ export function CategoryCard({ category, index }: CategoryCardProps) {
         }),
       });
 
-      const payload = (await response.json()) as { error?: string };
+      let payload: { error?: string } = {};
+
+      try {
+        payload = (await response.json()) as { error?: string };
+      } catch {
+        payload = {};
+      }
 
       if (!response.ok) {
-        setError(payload.error ?? "Unable to unlock this gallery.");
+        if (response.status === 404) {
+          setError(
+            payload.error ??
+              "This gallery could not be found. Check the category in Studio and try again.",
+          );
+        } else {
+          setError(payload.error ?? "Unable to unlock this gallery.");
+        }
         return;
       }
 
@@ -62,19 +75,19 @@ export function CategoryCard({ category, index }: CategoryCardProps) {
 
   return (
     <motion.figure
-      className="mb-6 break-inside-avoid"
+      className="h-full"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.45, delay: (index % 3) * 0.08 }}
     >
-      <div className="gallery-flip-scene">
+      <div className="gallery-flip-scene h-full">
         <div
-          className={`gallery-flip-inner rounded-2xl border border-border bg-surface ${
+          className={`gallery-flip-inner h-full min-h-[28rem] rounded-2xl border border-border bg-surface ${
             isFlipped ? "gallery-flip-inner--flipped" : ""
           }`}
         >
-          <div className="gallery-flip-face overflow-hidden rounded-2xl">
+          <div className="gallery-flip-face flex h-full flex-col overflow-hidden rounded-2xl">
             {category.passwordProtected ? (
               <button
                 type="button"
@@ -95,7 +108,7 @@ export function CategoryCard({ category, index }: CategoryCardProps) {
             )}
           </div>
 
-          <div className="gallery-flip-face gallery-flip-face--back overflow-hidden rounded-2xl">
+          <div className="gallery-flip-face gallery-flip-face--back h-full overflow-hidden rounded-2xl">
             <form
               onSubmit={handleSubmit}
               className="relative flex h-full flex-col"

@@ -67,3 +67,18 @@ export async function fetchSanityWithToken<T>(
     cache: "no-store",
   });
 }
+
+/** Server-side fetch bypassing CDN cache (no token required on public datasets). */
+export async function fetchSanityFresh<T>(
+  query: string,
+  params: QueryParams = {},
+): Promise<T> {
+  const client = createClient({
+    projectId,
+    dataset,
+    apiVersion,
+    useCdn: false,
+  });
+
+  return client.fetch<T>(query, params, { cache: "no-store" });
+}

@@ -1,6 +1,10 @@
 import { fetchSanity, fetchSanityWithToken } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
 import {
+  DEFAULT_GALLERY_CATEGORIES,
+  DEFAULT_GALLERY_CATEGORY_LABELS,
+} from "@/lib/defaultGalleryCategories";
+import {
   allGalleryCategoriesQuery,
   galleryCategoryUnlockQuery,
 } from "@/sanity/queries";
@@ -12,31 +16,24 @@ export type GalleryCategoryDefinition = {
   sortOrder: number;
 };
 
-const LEGACY_CATEGORY_LABELS: Record<string, string> = {
-  landscape: "Landscape",
-  birds: "Birds",
-  wildlife: "Wildlife",
-  city: "City",
-  portrait: "Portrait",
-  nature: "Nature",
-  space: "Space",
-  "rural-rustic": "Rural/Rustic",
-};
-
 export function formatCategorySlug(slug: string): string {
-  return LEGACY_CATEGORY_LABELS[slug] ?? slug.replace(/-/g, " ");
+  return DEFAULT_GALLERY_CATEGORY_LABELS[slug] ?? slug.replace(/-/g, " ");
+}
+
+function getDefaultGalleryCategoryDefinitions(): GalleryCategoryDefinition[] {
+  return DEFAULT_GALLERY_CATEGORIES.map((category) => ({
+    slug: category.slug,
+    title: category.title,
+    passwordProtected: false,
+    sortOrder: category.sortOrder,
+  }));
 }
 
 export async function getGalleryCategoryDefinitions(): Promise<
   GalleryCategoryDefinition[]
 > {
   if (!isSanityConfigured) {
-    return Object.entries(LEGACY_CATEGORY_LABELS).map(([slug, title], index) => ({
-      slug,
-      title,
-      passwordProtected: false,
-      sortOrder: index,
-    }));
+    return getDefaultGalleryCategoryDefinitions();
   }
 
   try {
@@ -50,12 +47,7 @@ export async function getGalleryCategoryDefinitions(): Promise<
     >(allGalleryCategoriesQuery);
 
     if (!categories.length) {
-      return Object.entries(LEGACY_CATEGORY_LABELS).map(([slug, title], index) => ({
-        slug,
-        title,
-        passwordProtected: false,
-        sortOrder: index,
-      }));
+      return getDefaultGalleryCategoryDefinitions();
     }
 
     return categories
@@ -67,12 +59,7 @@ export async function getGalleryCategoryDefinitions(): Promise<
         sortOrder: category.sortOrder ?? 999,
       }));
   } catch {
-    return Object.entries(LEGACY_CATEGORY_LABELS).map(([slug, title], index) => ({
-      slug,
-      title,
-      passwordProtected: false,
-      sortOrder: index,
-    }));
+    return getDefaultGalleryCategoryDefinitions();
   }
 }
 

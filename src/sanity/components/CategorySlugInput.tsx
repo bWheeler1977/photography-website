@@ -1,7 +1,8 @@
 "use client";
 
-import { Card, Select, Stack, Text } from "@sanity/ui";
+import { Card, Select, Text } from "@sanity/ui";
 import { useCallback, useEffect, useState } from "react";
+import { DEFAULT_GALLERY_CATEGORY_OPTIONS } from "@/lib/defaultGalleryCategories";
 import type { StringInputProps } from "sanity";
 import { PatchEvent, set, unset, useClient } from "sanity";
 
@@ -28,12 +29,18 @@ export function CategorySlugInput(props: StringInputProps) {
       )
       .then((categories) => {
         if (isMounted) {
-          setOptions(categories.filter((category) => Boolean(category.value)));
+          const fromSanity = categories.filter((category) =>
+            Boolean(category.value),
+          );
+          setOptions(
+            fromSanity.length > 0 ? fromSanity : DEFAULT_GALLERY_CATEGORY_OPTIONS,
+          );
           setIsLoading(false);
         }
       })
       .catch(() => {
         if (isMounted) {
+          setOptions(DEFAULT_GALLERY_CATEGORY_OPTIONS);
           setIsLoading(false);
         }
       });
@@ -56,22 +63,6 @@ export function CategorySlugInput(props: StringInputProps) {
         <Text size={1} muted>
           Loading gallery categories…
         </Text>
-      </Card>
-    );
-  }
-
-  if (!options.length) {
-    return (
-      <Card padding={3} radius={2} tone="caution" border>
-        <Stack space={2}>
-          <Text size={1} weight="medium">
-            No gallery categories yet
-          </Text>
-          <Text size={1} muted>
-            Create one under Gallery Categories in the Studio sidebar, then
-            assign it here.
-          </Text>
-        </Stack>
       </Card>
     );
   }

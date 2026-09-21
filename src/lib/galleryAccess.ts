@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 const ACCESS_TTL_MS = 30 * 60 * 1000;
 const COOKIE_PREFIX = "gallery_access_";
 
-function getGalleryAccessSecret(): string {
+export function getGalleryAccessSecretOrNull(): string | null {
   const secret = process.env.GALLERY_ACCESS_SECRET;
 
   if (secret) {
@@ -15,7 +15,21 @@ function getGalleryAccessSecret(): string {
     return "development-gallery-access-secret";
   }
 
-  throw new Error("GALLERY_ACCESS_SECRET is not configured");
+  return null;
+}
+
+export function isGalleryAccessConfigured(): boolean {
+  return getGalleryAccessSecretOrNull() !== null;
+}
+
+function getGalleryAccessSecret(): string {
+  const secret = getGalleryAccessSecretOrNull();
+
+  if (!secret) {
+    throw new Error("GALLERY_ACCESS_SECRET is not configured");
+  }
+
+  return secret;
 }
 
 export function galleryAccessCookieName(categorySlug: string): string {
@@ -58,7 +72,13 @@ export function verifyGalleryAccessToken(
     return false;
   }
 
-  const expectedSignature = createHmac("sha256", getGalleryAccessSecret())
+  const secret = getGalleryAccessSecretOrNull();
+
+  if (!secret) {
+    return false;
+  }
+
+  const expectedSignature = createHmac("sha256", secret)
     .update(payload)
     .digest("base64url");
 

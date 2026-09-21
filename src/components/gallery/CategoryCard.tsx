@@ -54,14 +54,12 @@ export function CategoryCard({ category, index }: CategoryCardProps) {
       }
 
       if (!response.ok) {
-        if (response.status === 404) {
-          setError(
-            payload.error ??
-              "This gallery could not be found. Check the category in Studio and try again.",
-          );
-        } else {
-          setError(payload.error ?? "Unable to unlock this gallery.");
-        }
+        setError(
+          payload.error ??
+            (response.status === 404
+              ? "This gallery could not be found. Check the category in Studio and try again."
+              : "Unable to unlock this gallery."),
+        );
         return;
       }
 

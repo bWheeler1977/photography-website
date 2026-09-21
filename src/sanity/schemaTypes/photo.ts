@@ -64,6 +64,12 @@ export const photo = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "photoByRonaldWheeler",
+      title: "Photo by Ronald Wheeler",
+      type: "boolean",
+      initialValue: false,
+    }),
+    defineField({
       name: "instagramId",
       title: "Instagram post ID",
       type: "string",

@@ -105,6 +105,7 @@ function mapPhoto(doc: SanityPhotoDocument): Photo {
     fullSrc: urlFor(doc.image).width(2400).quality(90).url(),
     category: doc.category,
     featured: doc.featured,
+    photoByRonaldWheeler: doc.photoByRonaldWheeler,
     instagramId: doc.instagramId,
     cameraMetadata,
   };

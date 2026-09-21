@@ -17,6 +17,7 @@ export type Photo = {
   fullSrc: string;
   category: string;
   featured?: boolean;
+  photoByRonaldWheeler?: boolean;
   instagramId?: string;
   cameraMetadata?: PhotoCameraMetadata;
 };

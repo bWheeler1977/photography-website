@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
+import { PhotoByRonaldWheelerLabel } from "@/components/gallery/PhotoByRonaldWheelerLabel";
 import { PhotoMetadataPanel } from "@/components/gallery/PhotoMetadataPanel";
 import {
   hasCameraMetadata,
@@ -251,6 +252,12 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
                     handleImageLoad();
                   }}
                 />
+
+                {displayedPhoto.photoByRonaldWheeler ? (
+                  <div className="pointer-events-none absolute bottom-4 left-4 z-20">
+                    <PhotoByRonaldWheelerLabel />
+                  </div>
+                ) : null}
 
                 {showMetadataButton && displayedPhoto.cameraMetadata && (
                   <>

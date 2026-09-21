@@ -9,6 +9,7 @@ export const allPhotosQuery = groq`
     image,
     category,
     featured,
+    photoByRonaldWheeler,
     instagramId,
     cameraMetadata,
     "assetMetadata": image.asset->metadata {
@@ -26,6 +27,7 @@ export const featuredPhotosQuery = groq`
     image,
     category,
     featured,
+    photoByRonaldWheeler,
     instagramId,
     cameraMetadata,
     "assetMetadata": image.asset->metadata {
@@ -43,6 +45,7 @@ export const photoByIdQuery = groq`
     image,
     category,
     featured,
+    photoByRonaldWheeler,
     instagramId,
     cameraMetadata,
     "assetMetadata": image.asset->metadata {
@@ -76,6 +79,7 @@ export const photosByCategoryQuery = groq`
     image,
     category,
     featured,
+    photoByRonaldWheeler,
     instagramId,
     cameraMetadata,
     "assetMetadata": image.asset->metadata {
@@ -126,6 +130,7 @@ export type SanityPhotoDocument = {
   image: SanityImageSource;
   category: string;
   featured?: boolean;
+  photoByRonaldWheeler?: boolean;
   instagramId?: string;
   cameraMetadata?: {
     cameraModel?: string;

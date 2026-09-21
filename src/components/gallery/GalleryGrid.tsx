@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { PhotoByRonaldWheelerLabel } from "@/components/gallery/PhotoByRonaldWheelerLabel";
 import { PhotoLightbox } from "@/components/gallery/PhotoLightbox";
 import { formatCategorySlug } from "@/lib/galleryCategories";
 import type { Photo } from "@/types";
@@ -43,6 +44,11 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
                   className="object-cover transition duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
+                {photo.photoByRonaldWheeler ? (
+                  <div className="pointer-events-none absolute bottom-3 left-3 z-10">
+                    <PhotoByRonaldWheelerLabel />
+                  </div>
+                ) : null}
               </div>
               <figcaption className="p-4">
                 <p className="text-xs uppercase tracking-[0.15em] text-muted">

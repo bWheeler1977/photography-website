@@ -9,6 +9,7 @@ import {
   hasCameraMetadata,
   logCameraMetadataDebug,
 } from "@/lib/cameraMetadata";
+import { downloadPhoto } from "@/lib/downloadPhoto";
 import { formatCategorySlug } from "@/lib/galleryCategories";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
@@ -18,6 +19,7 @@ type PhotoLightboxProps = {
   photos: Photo[];
   index: number | null;
   onClose: () => void;
+  allowDownload?: boolean;
 };
 
 function preloadImage(src: string): Promise<void> {
@@ -29,11 +31,17 @@ function preloadImage(src: string): Promise<void> {
   });
 }
 
-export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
+export function PhotoLightbox({
+  photos,
+  index,
+  onClose,
+  allowDownload = false,
+}: PhotoLightboxProps) {
   const [displayedIndex, setDisplayedIndex] = useState<number | null>(index);
   const [isBlurred, setIsBlurred] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{
     width: number;
     height: number;
@@ -42,6 +50,22 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
   const displayedPhoto =
     displayedIndex !== null ? photos[displayedIndex] ?? null : null;
   const showMetadataButton = hasCameraMetadata(displayedPhoto?.cameraMetadata);
+
+  const handleDownload = useCallback(async () => {
+    if (!displayedPhoto || isDownloading) {
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      await downloadPhoto(displayedPhoto.fullSrc, displayedPhoto.title);
+    } catch {
+      window.alert("Unable to download this photo. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [displayedPhoto, isDownloading]);
 
   useEffect(() => {
     if (index === null) {
@@ -257,6 +281,18 @@ export function PhotoLightbox({ photos, index, onClose }: PhotoLightboxProps) {
                   <div className="pointer-events-none absolute bottom-4 left-4 z-20">
                     <PhotoByRonaldWheelerLabel />
                   </div>
+                ) : null}
+
+                {allowDownload ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleDownload()}
+                    disabled={isDownloading}
+                    className="absolute top-4 left-4 z-20 rounded-full border border-white/25 bg-black/55 px-3 py-2 text-xs font-medium uppercase tracking-[0.12em] text-white/90 backdrop-blur-sm transition hover:border-white/45 hover:bg-black/70 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    aria-label="Download photo"
+                  >
+                    {isDownloading ? "Downloading…" : "Download"}
+                  </button>
                 ) : null}
 
                 {showMetadataButton && displayedPhoto.cameraMetadata && (

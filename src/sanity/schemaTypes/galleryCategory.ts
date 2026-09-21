@@ -46,6 +46,14 @@ export const galleryCategory = defineType({
         }),
     }),
     defineField({
+      name: "allowDownload",
+      title: "Allow photo downloads",
+      type: "boolean",
+      description:
+        "When enabled, visitors can download full-size images from this gallery.",
+      initialValue: false,
+    }),
+    defineField({
       name: "sortOrder",
       title: "Sort order",
       type: "number",

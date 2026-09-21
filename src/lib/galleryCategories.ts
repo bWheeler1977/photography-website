@@ -13,6 +13,7 @@ export type GalleryCategoryDefinition = {
   slug: string;
   title: string;
   passwordProtected: boolean;
+  allowDownload: boolean;
   sortOrder: number;
 };
 
@@ -25,6 +26,7 @@ function getDefaultGalleryCategoryDefinitions(): GalleryCategoryDefinition[] {
     slug: category.slug,
     title: category.title,
     passwordProtected: false,
+    allowDownload: false,
     sortOrder: category.sortOrder,
   }));
 }
@@ -42,6 +44,7 @@ export async function getGalleryCategoryDefinitions(): Promise<
         title: string;
         slug: string;
         passwordProtected?: boolean;
+        allowDownload?: boolean;
         sortOrder?: number;
       }>
     >(allGalleryCategoriesQuery);
@@ -56,6 +59,7 @@ export async function getGalleryCategoryDefinitions(): Promise<
         slug: category.slug,
         title: category.title,
         passwordProtected: Boolean(category.passwordProtected),
+        allowDownload: Boolean(category.allowDownload),
         sortOrder: category.sortOrder ?? 999,
       }));
   } catch {

@@ -60,6 +60,7 @@ export const allGalleryCategoriesQuery = groq`
     title,
     "slug": slug.current,
     passwordProtected,
+    allowDownload,
     sortOrder
   }
 `;

@@ -10,9 +10,10 @@ import type { Photo } from "@/types";
 
 type GalleryGridProps = {
   photos: Photo[];
+  allowDownload?: boolean;
 };
 
-export function GalleryGrid({ photos }: GalleryGridProps) {
+export function GalleryGrid({ photos, allowDownload = false }: GalleryGridProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const openPhoto = (index: number) => setSelectedIndex(index);
@@ -65,6 +66,7 @@ export function GalleryGrid({ photos }: GalleryGridProps) {
         photos={photos}
         index={selectedIndex}
         onClose={closePhoto}
+        allowDownload={allowDownload}
       />
     </>
   );

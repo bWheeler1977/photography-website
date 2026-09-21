@@ -74,7 +74,10 @@ export default async function CategoryGalleryPage({
           . Click any image to view it full size.
         </p>
       </header>
-      <GalleryGrid photos={photos} />
+      <GalleryGrid
+        photos={photos}
+        allowDownload={categoryMeta?.allowDownload ?? false}
+      />
     </div>
   );
 }

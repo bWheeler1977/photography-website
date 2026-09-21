@@ -19,6 +19,23 @@ export default defineConfig({
   plugins: [structureTool({ structure }), visionTool()],
   schema: {
     types: schemaTypes,
+    templates: (previousTemplates) => [
+      ...previousTemplates,
+      {
+        id: "photo-in-category",
+        title: "Photo",
+        schemaType: "photo",
+        parameters: [
+          {
+            name: "category",
+            title: "Category slug",
+            type: "string",
+          },
+        ],
+        value: ({ category }: { category?: string }) =>
+          category ? { category } : {},
+      },
+    ],
   },
   document: {
     badges: (prev, context) =>

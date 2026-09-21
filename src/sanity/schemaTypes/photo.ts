@@ -9,6 +9,39 @@ export const photo = defineType({
   name: "photo",
   title: "Photo",
   type: "document",
+  orderings: [
+    {
+      title: "Gallery order",
+      name: "galleryOrder",
+      by: [
+        { field: "order", direction: "asc" },
+        { field: "title", direction: "asc" },
+      ],
+    },
+    {
+      title: "Title, A–Z",
+      name: "titleAsc",
+      by: [{ field: "title", direction: "asc" }],
+    },
+    {
+      title: "Title, Z–A",
+      name: "titleDesc",
+      by: [{ field: "title", direction: "desc" }],
+    },
+    {
+      title: "Category, then title",
+      name: "categoryAsc",
+      by: [
+        { field: "category", direction: "asc" },
+        { field: "title", direction: "asc" },
+      ],
+    },
+    {
+      title: "Recently updated",
+      name: "updatedDesc",
+      by: [{ field: "_updatedAt", direction: "desc" }],
+    },
+  ],
   fields: [
     defineField({
       name: "title",
@@ -142,11 +175,21 @@ export const photo = defineType({
       subtitle: "category",
       media: "image",
       featured: "featured",
+      order: "order",
     },
-    prepare({ title, subtitle, media, featured }) {
+    prepare({ title, subtitle, media, featured, order }) {
+      const categoryLabel = subtitle
+        ? formatCategorySlug(String(subtitle))
+        : undefined;
+      const orderLabel =
+        typeof order === "number" ? ` · Gallery #${order}` : undefined;
+
       return {
         title,
-        subtitle: subtitle ? formatCategorySlug(String(subtitle)) : undefined,
+        subtitle:
+          categoryLabel && orderLabel
+            ? `${categoryLabel}${orderLabel}`
+            : categoryLabel ?? orderLabel,
         media:
           featured && media
             ? createElement(PhotoPreviewMedia, { image: media, featured: true })

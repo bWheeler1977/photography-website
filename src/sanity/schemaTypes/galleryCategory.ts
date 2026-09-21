@@ -68,6 +68,8 @@ export const galleryCategory = defineType({
       description: "Lower numbers appear first on the gallery page.",
     }),
   ],
+  description:
+    "Use “Delete category” in the ⋮ menu to remove a category and reassign its photos.",
   preview: {
     select: {
       title: "title",

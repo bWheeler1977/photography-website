@@ -36,7 +36,9 @@ function photoListForFilter(
     ]);
   }
 
-  return list;
+  return list.child((documentId) =>
+    S.document().schemaType("photo").documentId(documentId),
+  );
 }
 
 function categoryPhotoListItem(
@@ -76,7 +78,10 @@ export function buildPhotoStructureItems(
           .title("Recently updated")
           .schemaType("photo")
           .filter('_type == "photo"')
-          .defaultOrdering([{ field: "_updatedAt", direction: "desc" }]),
+          .defaultOrdering([{ field: "_updatedAt", direction: "desc" }])
+          .child((documentId) =>
+            S.document().schemaType("photo").documentId(documentId),
+          ),
       ),
     S.listItem()
       .title("Featured on homepage")

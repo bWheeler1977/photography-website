@@ -50,7 +50,13 @@ export const structure: StructureResolver = async (S, context) => {
         .title("Gallery Categories")
         .schemaType("galleryCategory")
         .child(
-          S.documentTypeList("galleryCategory").title("Gallery Categories"),
+          S.documentTypeList("galleryCategory")
+            .title("Gallery Categories")
+            .child((documentId) =>
+              S.document()
+                .schemaType("galleryCategory")
+                .documentId(documentId),
+            ),
         ),
       S.listItem()
         .title("Photos")

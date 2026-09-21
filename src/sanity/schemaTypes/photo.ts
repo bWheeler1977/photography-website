@@ -88,7 +88,18 @@ export const photo = defineType({
       components: {
         input: CategorySlugInput,
       },
-      validation: (rule) => rule.required().error("Category is required"),
+      validation: (rule) =>
+        rule.custom((value) => {
+          if (!value?.trim()) {
+            return {
+              message:
+                "Photos without a category stay out of the public gallery until you assign one.",
+              level: "warning",
+            };
+          }
+
+          return true;
+        }),
     }),
     defineField({
       name: "featured",

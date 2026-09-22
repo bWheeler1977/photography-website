@@ -1,4 +1,3 @@
-import { ImagesIcon } from "@sanity/icons";
 import type { StructureResolver } from "sanity/structure";
 import { formatCategorySlug } from "@/lib/galleryCategories";
 import { apiVersion } from "@/sanity/env";
@@ -58,16 +57,8 @@ export const structure: StructureResolver = async (S, context) => {
                 .documentId(documentId),
             ),
         ),
-      S.listItem()
-        .title("Photos")
-        .icon(ImagesIcon)
-        .child(
-          S.list()
-            .title("Photos")
-            .items(
-              buildPhotoStructureItems(S, categories, orphanCategorySlugs),
-            ),
-        ),
+      S.divider(),
+      ...buildPhotoStructureItems(S, categories, orphanCategorySlugs),
       S.divider(),
       ...S.documentTypeListItems().filter(
         (item) => !structuredDocumentTypes.has(item.getId() ?? ""),

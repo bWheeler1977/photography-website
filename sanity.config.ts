@@ -5,6 +5,7 @@ import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { featuredPhotoBadge } from "./src/sanity/badges/featuredPhotoBadge";
 import { documentActions } from "./src/sanity/documentActions";
+import { defaultDocumentNode } from "./src/sanity/defaultDocumentNode";
 import { schemaTypes } from "./src/sanity/schemaTypes";
 import { structure } from "./src/sanity/structure";
 
@@ -17,7 +18,10 @@ export default defineConfig({
   projectId,
   dataset,
   basePath: "/studio",
-  plugins: [structureTool({ structure }), visionTool()],
+  plugins: [
+    structureTool({ structure, defaultDocumentNode }),
+    visionTool(),
+  ],
   schema: {
     types: schemaTypes,
     templates: (previousTemplates) => [

@@ -369,7 +369,16 @@ export function PhotoImageInput(props: ObjectInputProps<ImageValue>) {
           <Text size={1}>{uploadNotice}</Text>
         </Card>
       )}
-      <div ref={containerRef}>{props.renderDefault(props)}</div>
+      <div
+        ref={containerRef}
+        data-photo-image-input=""
+        style={{
+          maxHeight: "min(420px, 50vh)",
+          overflow: "auto",
+        }}
+      >
+        {props.renderDefault(props)}
+      </div>
     </Stack>
   );
 }

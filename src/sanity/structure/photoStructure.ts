@@ -11,16 +11,29 @@ type GalleryCategoryRow = {
   slug: string;
 };
 
+function slugifyListId(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function photoDocumentChild(S: StructureBuilder) {
+  return (documentId: string) =>
+    S.document().schemaType("photo").documentId(documentId);
+}
+
 function photoListForFilter(
   S: StructureBuilder,
+  listId: string,
   title: string,
   filter: string,
   params?: Record<string, string | string[]>,
   initialCategory?: string,
 ) {
-  let list = S.documentList()
+  let list = S.documentTypeList("photo")
+    .id(listId)
     .title(title)
-    .schemaType("photo")
     .filter(filter)
     .defaultOrdering(photoListDefaultOrdering);
 
@@ -36,9 +49,7 @@ function photoListForFilter(
     ]);
   }
 
-  return list.child((documentId) =>
-    S.document().schemaType("photo").documentId(documentId),
-  );
+  return list.child(photoDocumentChild(S));
 }
 
 function categoryPhotoListItem(
@@ -47,11 +58,13 @@ function categoryPhotoListItem(
 ) {
   return S.listItem()
     .title(category.title)
+    .id(`photos-${category.slug}`)
     .child(
       photoListForFilter(
         S,
+        `photo-list-${category.slug}`,
         category.title,
-        '_type == "photo" && category == $category',
+        'category == $category',
         { category: category.slug },
         category.slug,
       ),
@@ -68,28 +81,30 @@ export function buildPhotoStructureItems(
   const items = [
     S.listItem()
       .title("All photos")
+      .id("photos-all")
       .child(
-        photoListForFilter(S, "All photos", '_type == "photo"'),
+        photoListForFilter(S, "photo-list-all", "All photos", '_type == "photo"'),
       ),
     S.listItem()
       .title("Recently updated")
+      .id("photos-recent")
       .child(
-        S.documentList()
+        S.documentTypeList("photo")
+          .id("photo-list-recent")
           .title("Recently updated")
-          .schemaType("photo")
           .filter('_type == "photo"')
           .defaultOrdering([{ field: "_updatedAt", direction: "desc" }])
-          .child((documentId) =>
-            S.document().schemaType("photo").documentId(documentId),
-          ),
+          .child(photoDocumentChild(S)),
       ),
     S.listItem()
       .title("Featured on homepage")
+      .id("photos-featured")
       .child(
         photoListForFilter(
           S,
+          "photo-list-featured",
           "Featured on homepage",
-          '_type == "photo" && featured == true',
+          "featured == true",
         ),
       ),
     S.divider(),
@@ -98,40 +113,36 @@ export function buildPhotoStructureItems(
 
   if (orphanCategorySlugs.length > 0) {
     items.push(S.divider());
-    items.push(
-      S.listItem()
-        .title("Other categories")
-        .child(
-          S.list()
-            .title("Other categories")
-            .items(
-              orphanCategorySlugs.map((slug) =>
-                S.listItem()
-                  .title(formatCategorySlug(slug))
-                  .child(
-                    photoListForFilter(
-                      S,
-                      formatCategorySlug(slug),
-                      '_type == "photo" && category == $category',
-                      { category: slug },
-                      slug,
-                    ),
-                  ),
-              ),
+    for (const slug of orphanCategorySlugs) {
+      items.push(
+        S.listItem()
+          .title(formatCategorySlug(slug))
+          .id(`photos-${slug}`)
+          .child(
+            photoListForFilter(
+              S,
+              `photo-list-${slugifyListId(slug)}`,
+              formatCategorySlug(slug),
+              'category == $category',
+              { category: slug },
+              slug,
             ),
-        ),
-    );
+          ),
+      );
+    }
   }
 
   if (knownSlugs.length > 0) {
     items.push(
       S.listItem()
         .title("Outside gallery categories")
+        .id("photos-outside-categories")
         .child(
           photoListForFilter(
             S,
+            "photo-list-outside-categories",
             "Outside gallery categories",
-            '_type == "photo" && !(category in $knownSlugs)',
+            "!(category in $knownSlugs)",
             { knownSlugs },
           ),
         ),
